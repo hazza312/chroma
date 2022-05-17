@@ -1,0 +1,40 @@
+W i386/16 Core 
+W stack I nip M 46 46 I drop M 8b 04 G nip I dup M 4e 4e 89 04 
+W numeric I lit G dup M b8 Y i16 I + M 03 04 G nip I - M f7 d8 03 04 G nip    
+W logic I and M 23 04 G nip I or M 0b 04 G nip I xor M 33 04 G nip I rol M 51 88 c1 8b 04 d3 c0 59 G nip
+W branch I jmp M e9 M 00 00  I jnz M 75 00  I jz M 74 00 I jns M 79 00  I js M 78 00  I test M 85 c0 
+W flow I call M e8 00 00  I ; M c3  I hlt M F4 
+W memory I ! M 89 c5 8b 04 89 46 00 G drop drop I @ M 89 c3 8b 07  
+
+
+W Compiler internals
+I -if G test jns Y ip @ 1 - G drop Y ; I if G test jz Y ip @  1 - ; 
+I then Y dup 1 + ip @ swap - swap i! G drop Y ; 
+I for M 51 89 c1 G drop Y ip @
+I next M e2 Y ip @ - 1 - i8 M 59 Y ;
+
+
+W i386/16/DOS COM Binary Format
+Y $100 ibase ! W instruction base address
+Y $400 dbase ! W data base address
+
+
+W i386/16/DOS Runtime
+I int21h M cd 21 G drop Y ; R init M be 00 e8 G ;
+R emit M 88 c2 b4 02 G int21h ; R space G $20 emit ; R cr G $d $a emit emit ;
+R puts M 89 c2 b4 09 G int21h ; R hexchar G dup 10 - -if $30 + ; then $37 + ;
+R . G 4 for G 4 rol dup $f and hexchar emit next G drop ;
+
+
+W User code: incrementally test some language features
+R main G init
+R test1 G 49 emit space
+R test2 G 50 2 for dup emit space 1 + next drop
+R test3 G $4567 dup . space
+R test4 G 2 for $4444 + dup . space next drop cr
+R test5 G 65 13 for 2 for dup emit 1 + next next cr
+R test6 G $FEDC P a G ! $7654 P c G ! $3210 P d G ! $BA98 P b G ! d c b a 4 for @ . next cr
+R test7 G "pizza$" puts cr 
+R test8 G "pizza$" P pizza G ! pizza @ puts cr ; 
+
+
