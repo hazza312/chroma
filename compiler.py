@@ -3,36 +3,36 @@ from common import Colour, Token
 from formatter import Formatter
 
 class Compiler:
-    def __init__(self, tokens):
+    def __init__(self, tokens, f):
         self._tokens = tokens
         self._macros = {}
         self._definitions = {}
         self._variables = {}
 
-        self._text = bytearray([0xe9, 0, 0])
+        self._f = f
+        self._text = bytearray([])
         self._data = bytearray([])
 
         self._stack = []
 
-        self._compiler_vars = {
-            "ip": self.ip,
-            "dp": self.dp,
-            "ibase": 0x100,
-            "dbase": 0x300             
-        }
+        self._compiler_vars = {"ip": 0, "dp": 0, "ibase": 0, "dbase": 0}
 
-    def ibase(self):
-        return self._compiler_vars["ibase"]
 
-    def dbase(self):
-        return self._compiler_vars["dbase"]
+    def write_text(self, add):
+        size = len(add)
+        start = self._compiler_vars["ip"] - self._compiler_vars["ibase"]
+        end = start + size
+        self._text.extend(bytes([0]) * (len(self._text) - end))
+        self._text[start:end] = add
+        self._compiler_vars["ip"] += size
 
-    def ip(self):
-        return self.ibase() + len(self._text)
-
-    def dp(self):
-        return self.dbase() + len(self._data)
-
+    def write_data(self, add):
+        size = len(add)
+        start = self._compiler_vars["dp"] - self._compiler_vars["dbase"] 
+        end = start + size
+        self._data.extend(bytes([0]) * (len(self._data) - end))
+        self._data[start:end] = add
+        self._compiler_vars["dp"] += size
 
     def macro_define_word(self, name, i, tokens): # cyan
         self._macros[name] = []
@@ -50,7 +50,7 @@ class Compiler:
         self._compile(self._macros["lit"])
 
     def i16(self, x):
-        self._text.extend(x.to_bytes(2, byteorder="little", signed=x < 0))
+        self.write_text(x.to_bytes(2, byteorder="little", signed=x < 0))
 
     def macro_call_word(self, word): # yellow
         if type(word.val) == int:
@@ -69,16 +69,16 @@ class Compiler:
         elif word.val == "i!":
             loc = self._stack.pop()
             val = self._stack.pop().to_bytes(1, byteorder="little", signed=True)[0]
-            self._text[loc - self.ibase()] = val
+            self._text[loc - self._compiler_vars["ibase"]] = val
 
         elif word.val == "i8":
-            self._text.extend(self._stack.pop().to_bytes(1, byteorder="little", signed=True))
+            self.write_text(self._stack.pop().to_bytes(1, byteorder="little", signed=True))
 
         elif word.val == "i16":
             self.i16(self._stack.pop())
 
         elif word.val == "@":
-            self._stack.append( self._compiler_vars[self._stack.pop()]())
+            self._stack.append( self._compiler_vars[self._stack.pop()])
 
         elif word.val == "drop":
             self._stack.pop()
@@ -89,8 +89,20 @@ class Compiler:
         elif word.val == "swap":
             self._stack[-1], self._stack[-2] = self._stack[-2], self._stack[-1]
 
+        elif word.val == "text":
+            self._f.write(self._text[:self._compiler_vars["ip"]])
+
+        elif word.val == "data":
+            self._f.write(self._data)
+
+        elif word.val == "padding":
+            self._f.write(bytes([0]) * self._stack.pop())
+
         elif word.val in self._compiler_vars:
             self._stack.append(word.val)
+
+        elif word.val in self._definitions:
+            self._stack.append(self._definitions[word.val])
 
         else:
             raise ValueError(f"unsupported #todo {word.val}")
@@ -100,7 +112,7 @@ class Compiler:
         if word.val in self._macros:
             self._compile(self._macros[word.val])
         elif word.val in self._definitions:
-            offset = (self._definitions[word.val] - self.ip() - 3).to_bytes(2, byteorder="little", signed=True)
+            offset = (self._definitions[word.val] - self._compiler_vars["ip"] - 3).to_bytes(2, byteorder="little", signed=True)
 
             if next.val == ';': # tail rec
                 op = self._macros["jmp"]
@@ -109,7 +121,8 @@ class Compiler:
                 op = self._macros["call"]
 
             self._compile(op)
-            self._text[-2:] = offset
+            self._compiler_vars["ip"] -= 2
+            self.write_text(offset)
 
         elif word.val in self._variables:
             self.lit(self._variables[word.val])        
@@ -118,8 +131,8 @@ class Compiler:
             self.lit(word.val)
 
         elif word.val[0] == '"' and word.val[-1] == '"':
-            addr = self.dp()
-            self._data.extend(word.val[1:-1].encode())
+            addr = self._compiler_vars["dp"] 
+            self.write_data(word.val[1:-1].encode())
             self.lit(addr)
 
         else:
@@ -128,8 +141,8 @@ class Compiler:
         return consume
 
     def variable_define_word(self, word): # purple
-        self._variables[word.val] = self.dp()       
-        self._data.extend(bytes([0, 0]))
+        self._variables[word.val] = self._compiler_vars["dp"]     
+        self.write_data(bytes([0, 0]))
         self.lit(self._variables[word.val])        
 
     def _compile(self, tokens):
@@ -140,10 +153,10 @@ class Compiler:
             next = tokens[i+1] if i+1 < len(tokens) else None
 
             if curr.colour == Colour.MACHINE:
-                self._text.append(curr.val) # grey
+                self.write_text([curr.val]) # grey
 
             elif curr.colour == Colour.DEFINITION:
-                self._definitions[curr.val] = self.ip() # red
+                self._definitions[curr.val] = self._compiler_vars["ip"] # red
 
             elif curr.colour == Colour.INLINE:
                 i = self.macro_define_word(curr.val, i+1, tokens) # cyan
@@ -160,15 +173,10 @@ class Compiler:
             i += 1
 
 
-    def compile(self, f):
+    def compile(self,):
         self._compile(self._tokens)
-            
+        self._compile(self._macros['compile'])
 
-        self._text[1:3] = (self._definitions["main"] - self.ibase() - 3).to_bytes(2, byteorder="little", signed=True)
-        f.write(self._text)
-
-        f.write(bytes([0]) * (self.dbase() - (self.ibase() + len(self._text))))
-        f.write(self._data)
 
 
 if __name__ == '__main__':
@@ -177,5 +185,5 @@ if __name__ == '__main__':
     tokens = Lexer(open(sys.argv[1])).all
 
     Formatter(tokens).write(open(f"{base}.html", "w"))
-    Compiler(tokens).compile(open(f"{base}.com", "wb"))
+    Compiler(tokens, open(f"{base}.com", "wb")).compile()
 

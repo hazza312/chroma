@@ -25,8 +25,6 @@ class Lexer:
 
             yield Token(Colour.DOC, "\n")
 
-        yield Token(Colour.DOC, "eof")
-
     @property
     def all(self):
         return list(iter(self._lex()))
