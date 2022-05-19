@@ -1,0 +1,37 @@
+W JVM
+W This is a test to replicate the class file format
+
+Y 3 sections I code Y 1 section I constpool Y 2 section ;
+
+I compile Y 0 magic!
+M ca fe ba be W magic number
+M 00 00 00 31 W major / minor version
+M 00 18 W constant pool count
+Y constpool write 
+M 00 01 W access flags bitmask
+M 00 03 W this index class entry
+M 00 04 W super index class entry
+M 00 00 W interface count + empty table
+M 00 00 W field count + empty table
+M 00 01 W method count
+
+M 00 09 W access flags
+M 00 05 W name index
+M 00 06 W descriptor index
+M 00 01 W attributes count
+
+M 00 07 W name index (Code)
+M 00 00 00 2c W attribute length
+M 00 0a W max stack
+M 00 0a W max locals
+M 00 00 00 20 W code length
+Y code write W the actual code
+M 00 00 W exception table length
+M 00 00 W attributes count 
+M 00 00 W ?? Y ;
+
+Y 1 magic! W the code M
+A8 00 06 A7 00 1C B2 00 08 12 01 B6 00 09 A8 00 06 4B A9 00 B2 00 08 12 02 B6 00 09 4B A9 00 B1
+
+Y 2 magic! W the constantpool M
+08 00 17 08 00 16 07 00 15 07 00 14 01 00 04 6D 61 69 6E 01 00 16 28 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 56 01 00 04 43 6F 64 65 09 00 0F 00 10 0A 00 0A 00 0B 07 00 0E 0C 00 0C 00 0D 01 00 07 70 72 69 6E 74 6C 6E 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 29 56 01 00 13 6A 61 76 61 2F 69 6F 2F 50 72 69 6E 74 53 74 72 65 61 6D 07 00 13 0C 00 11 00 12 01 00 03 6F 75 74 01 00 15 4C 6A 61 76 61 2F 69 6F 2F 50 72 69 6E 74 53 74 72 65 61 6D 3B 01 00 10 6A 61 76 61 2F 6C 61 6E 67 2F 53 79 73 74 65 6D 01 00 10 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 01 00 05 68 65 6C 6C 6F 01 00 05 63 61 6C 6C 32 01 00 0C 48 65 6C 6C 6F 20 57 6F 72 6C 64 21
