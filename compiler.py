@@ -16,6 +16,7 @@ class Compiler:
 
         self._f = f
         self._sections = []
+        self._magic_dst = 0
 
     def write_section(self, section, add):
         size = len(add)
@@ -58,6 +59,9 @@ class Compiler:
                 } for _ in range(self._stack.pop())
             ]
 
+        elif word.val == "magic!":
+            self._magic_dst = self._stack.pop() - 1
+
         elif word.val == "+":
             self._stack.append(self._stack.pop() + self._stack.pop())
 
@@ -73,7 +77,7 @@ class Compiler:
         elif word.val == "i!":
             loc = self._stack.pop()
             val = self._stack.pop().to_bytes(1, byteorder="little", signed=True)[0]
-            self._sections[0]["buf"][loc - self._sections[0]["base"]] = val
+            self._sections[1]["buf"][loc - self._sections[1]["base"]] = val
 
         elif word.val == "w8":
             self.wx(1)
@@ -96,13 +100,15 @@ class Compiler:
             self._stack[-1], self._stack[-2] = self._stack[-2], self._stack[-1]
 
         elif word.val == "section":
-            self._stack.append(self._sections[self._stack.pop()])
+            self._stack.append(self._sections[self._stack.pop() - 1])
 
         elif word.val in ("base", "ptr", "buf"):
             self._stack.append(word.val)
 
-        elif word.val == "write":   
+        elif word.val == "write": 
+
             section = self._stack.pop()
+             
             self._f.write(section["buf"][:section["ptr"]])
 
         elif word.val == "padding":
@@ -122,7 +128,7 @@ class Compiler:
         if word.val in self._macros:
             self._compile(self._macros[word.val])
         elif word.val in self._definitions:
-            offset = (self._definitions[word.val] - self._sections[0]["ptr"] - 3).to_bytes(2, byteorder="little", signed=True)
+            offset = (self._definitions[word.val] - self._sections[1]["ptr"] - 3).to_bytes(2, byteorder="little", signed=True)
 
             if next.val == ';': # tail rec
                 op = self._macros["jmp"]
@@ -131,8 +137,8 @@ class Compiler:
                 op = self._macros["call"]
 
             self._compile(op)
-            self._sections[0]["ptr"] -= 2
-            self.write_section(self._sections[0], offset)
+            self._sections[1]["ptr"] -= 2
+            self.write_section(self._sections[1], offset)
 
         elif word.val in self._variables:
             self.lit(self._variables[word.val])        
@@ -141,8 +147,8 @@ class Compiler:
             self.lit(word.val)
 
         elif word.val[0] == '"' and word.val[-1] == '"':
-            addr = self._sections[1]["ptr"] #self._compiler_vars["dp"] 
-            self.write_section(self._sections[1], word.val[1:-1].encode())
+            addr = self._sections[2]["ptr"] #self._compiler_vars["dp"] 
+            self.write_section(self._sections[2], word.val[1:-1].encode())
             self.lit(addr)
 
         else:
@@ -151,8 +157,8 @@ class Compiler:
         return consume
 
     def variable_define_word(self, word): # purple
-        self._variables[word.val] = self._sections[1]["ptr"]   
-        self.write_section(self._sections[1], bytes([0, 0]))
+        self._variables[word.val] = self._sections[2]["ptr"]   
+        self.write_section(self._sections[2], bytes([0, 0]))
         self.lit(self._variables[word.val])        
 
     def _compile(self, tokens):
@@ -166,10 +172,13 @@ class Compiler:
                 print(self._depth * "\t", curr.colour, curr.val)
 
             if curr.colour == Colour.MACHINE:
-                self.write_section(self._sections[0], [curr.val]) # grey
+                if self._magic_dst >= 0:
+                    self.write_section(self._sections[self._magic_dst], [curr.val]) # grey
+                else:
+                    self._f.write(bytes([curr.val]))
 
             elif curr.colour == Colour.DEFINITION:
-                self._definitions[curr.val] = self._sections[0]["ptr"] # red
+                self._definitions[curr.val] = self._sections[1]["ptr"] # red
 
             elif curr.colour == Colour.INLINE:
                 i = self.macro_define_word(curr.val, i+1, tokens) # cyan
@@ -188,7 +197,7 @@ class Compiler:
             i += 1
 
 
-    def compile(self,):
+    def compile(self):
         self._compile(self._tokens)
         self._compile(self._macros['compile'])
 
@@ -200,5 +209,5 @@ if __name__ == '__main__':
     tokens = Lexer(open(sys.argv[1])).all
 
     Formatter(tokens).write(open(f"{base}.html", "w"))
-    Compiler(tokens, open(f"{base}.com", "wb"), True).compile()
+    Compiler(tokens, open(f"{base}.com", "wb"), False).compile()
 

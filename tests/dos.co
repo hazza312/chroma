@@ -15,7 +15,7 @@ I next M e2 Y ip@ - 1 - i8 M 59 Y ;
 
 
 W i386/16/DOS COM Binary Format
-Y 2 sections I text Y 0 section I data Y 1 section ;
+Y 2 sections I text Y 1 section I data Y 2 section ;
 Y $100 dup text base ! text ptr !
 Y $400 dup data base ! data ptr !
 
