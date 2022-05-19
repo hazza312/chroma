@@ -18,7 +18,7 @@ class Compiler:
         self._sections = []
         self._magic_dst = 0
 
-    def write_section(self, section, add):        
+    def write_section(self, section, add):      
         size = len(add)
         start = section["ptr"] - section["base"]
         end = start + size
@@ -42,7 +42,7 @@ class Compiler:
         self._compile(self._macros["lit"])
 
     def wx(self, nbytes):
-        section = self._stack.pop()
+        section = self._sections[self._magic_dst]
         val = self._stack.pop()
         self.write_section(section, val.to_bytes(nbytes, byteorder="little", signed=val < 0))
 
@@ -96,6 +96,12 @@ class Compiler:
         elif word.val == "dup":
             self._stack.append(self._stack[-1])
 
+        elif word.val == "len":
+            self._stack.append(len(self._stack.pop()))
+
+        elif word.val == "cpy":
+            self.write_section(self._sections[self._magic_dst], self._stack.pop().encode())
+
         elif word.val == "swap":
             self._stack[-1], self._stack[-2] = self._stack[-2], self._stack[-1]
 
@@ -106,13 +112,14 @@ class Compiler:
             self._stack.append(word.val)
 
         elif word.val == "write": 
-
             section = self._stack.pop()
-             
             self._f.write(section["buf"][:section["ptr"]])
 
         elif word.val == "padding":
             self._f.write(bytes([0]) * self._stack.pop())
+
+        elif word.val[0] == '"' and word.val[-1] == '"':
+            self._stack.append(word.val[1:-1])
 
         elif word.val in self._definitions:
             self._stack.append(self._definitions[word.val])
@@ -147,7 +154,7 @@ class Compiler:
             self.lit(word.val)
 
         elif word.val[0] == '"' and word.val[-1] == '"':
-            addr = self._sections[1]["ptr"] #self._compiler_vars["dp"] 
+            addr = self._sections[1]["ptr"]
             self.write_section(self._sections[1], word.val[1:-1].encode())
             self.lit(addr)
 

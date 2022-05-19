@@ -33,12 +33,15 @@ M 00 00 W ?? Y ;
 Y 1 magic! W the code M
 A8 00 06 A7 00 1C B2 00 08 12 01 B6 00 09 A8 00 06 4B A9 00 B2 00 08 12 02 B6 00 09 4B A9 00 B1
 
+I str Y dup len M 01 00 Y w8 cpy ; W todo proper endianness 
+
 Y 2 magic! W the constantpool M
 08 00 17 
 08 00 16 
 07 00 15 
 07 00 14 
-01 00 04 6D 61 69 6E W main M
+W 01 00 04 6D 61 69 6E W main M
+Y "main" str M
 01 00 16 28 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 56 W ([Ljava/lang/String;) M
 01 00 04 43 6F 64 65 W Code M
 09 00 0F 00 10 
