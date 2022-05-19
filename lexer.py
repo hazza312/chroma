@@ -8,9 +8,11 @@ class Lexer:
     def _lex(self):
         for line in self._io.read().splitlines():
             for word in line.split():
-                if (colour := Colour.parse(word)) is not None:
-                    self._colour = colour
+                try:
+                    self._colour = Colour(word)
                     continue
+                except ValueError:
+                    pass
 
                 if self._colour == Colour.MACHINE:
                     val = int(word, 16)

@@ -11,7 +11,7 @@ class Formatter:
                 f.write("<br>")
             else:
                 hex_colour = token.colour.to_hex
-                val = hex(token.val)[2:].rjust(2, '0') if token.colour == Colour.MACHINE else token.val 
+                val = hex(token.val)[2:].rjust(2, '0') if type(token.val) == int else token.val 
                 f.write(f'<span title="{token.colour.description}" style="background: black; color: {hex_colour}">{val}</span> ')
         f.write('</pre></body></html>')
 

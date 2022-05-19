@@ -1,31 +1,17 @@
-from enum import IntEnum
+from enum import Enum
 from dataclasses import dataclass
 from typing import Any 
 
-class Colour(IntEnum):
-    COMMENT = 0
-    MACHINE = 1
-    DEFINITION = 2
-    INLINE = 3
-    EXECUTE = 4
-    COMPILE = 5
-    VARIABLE = 6
-    REFERENCE = 7
-    DOC = 8
-
-    @classmethod
-    def parse(cls, s):
-        return {
-            'W': cls.COMMENT,
-            'M': cls.MACHINE,
-            'R': cls.DEFINITION,
-            'I': cls.INLINE,
-            'Y': cls.EXECUTE,
-            'G': cls.COMPILE,
-            'P': cls.VARIABLE,
-            'O': cls.REFERENCE
-        
-        }.get(s.upper(), None)
+class Colour(Enum):
+    COMMENT = "W"
+    MACHINE = "M"
+    DEFINITION = "R"
+    INLINE = "I"
+    EXECUTE = "Y"
+    COMPILE = "G"
+    VARIABLE = "P"
+    REFERENCE = "O"
+    DOC = "\n"
     
     @property
     def to_hex(self):
