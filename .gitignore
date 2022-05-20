@@ -1,4 +1,5 @@
 *.com
 *.COM
+*.class
 _misc/
 __pycache__/

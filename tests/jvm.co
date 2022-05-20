@@ -11,7 +11,7 @@ M 00 00 00 31 W major / minor version
 Y #constants @ w16 W constant pool count
 Y constpool section write 
 M 00 01 W access flags bitmask
-M 00 03 W this index class entry
+M 00 02 W this index class entry
 M 00 04 W super index class entry
 M 00 00 W interface count + empty table
 M 00 00 W field count + empty table
@@ -37,9 +37,9 @@ I call M a8 I jmp M a7 I getstatic M b2 I ldc M 12 I invokevirtual M b6
 I astore_0 M 4b I ret M a9 I return M b1 I ; Y astore_0 ret M 00 Y ; I swap M 5f 
 
 W Runtime Layer
-I puts Y getstatic M 00 08 G swap Y invokevirtual M 00 09 Y ;
+I puts Y getstatic M 00 0d G swap Y invokevirtual M 00 13 Y ;
 
-I str1 Y ldc M 01 Y ; I str2 Y ldc M 02 Y ;
+I str1 Y ldc M 15 Y ; I str2 Y ldc M 16 Y ;
 I L1 M 00 06 I L2 M 00 06 I L3 M 00 1e Y ; W sneaky forward references
 
 Y code magic! W grey numbers to section 1 
@@ -52,41 +52,35 @@ R L3 Y return
 
 
 W Constant pool 🏊 -------------------------------------------------------------
-I #constants Y constpool section "size" ;
-I #constants++ Y #constants @ 1 + #constants ! ;
+I #constants Y constpool section "size" I cp@ Y #constants @ 
+I #constants++ Y cp@ 1 + #constants ! ;
 1 #constants !
 
 I 1arg Y w16 #constants++ I 2args Y w16 w16 #constants++ ;
 
-I str Y dup len M 01 Y 1arg cpy 
-I strref M 08 Y 1arg I classref M 07 Y 1arg
-I fieldref W nametype class M 09 Y 2args 
-I methodref W nametype class M 0a Y 2args
-I nametype W type name M 0c Y 2args
-Y ;
+I str Y dup len M 01 Y 1arg cpy I strref M 08 Y 1arg I string Y str cp@ 1 - strref ;
+I classref M 07 Y 1arg I fieldref M 09 Y 2args I methodref M 0a Y 2args I nametype M 0c Y 2args
+I class W class Y str cp@ 1 - classref
+
+I static-field W type class field Y str class str 
+cp@ 1 - dup 3 - nametype
+cp@ 1 - dup 2 - fieldref ;
+
+I method W type class method Y str class str
+cp@ 1 - dup 3 - nametype
+cp@ 1 - dup 2 - methodref ;
+
 
 Y constpool magic! W the constantpool M
-Y $17 strref
-Y $16 strref 
-Y $15 classref 
-Y $14 classref
-Y "main" str Y
-"([Ljava/lang/String;)V" str 
-"Code" str Y 
-$10 $f fieldref 
-$b $a methodref
-Y $0e classref Y
-$d $c nametype
-"println" str 
-"(Ljava/lang/Object;)V" str 
-"java/io/PrintStream" str Y
-$13 classref 
-$12 $11 nametype
-Y "out" str Y
-"Ljava/io/PrintStream;" str Y
-"java/lang/System" str 
-"java/lang/Object" str 
-"hello" str
-"call2" str
-"Hello_World!" str W todo spaces in string literals
+W 01 Y "hello" class
+W 03 Y "java/lang/Object" class
+W 05 Y "main" str W method name
+W 06 Y "([Ljava/lang/String;)V" str W method descriptor
+W 07 Y "Code" str W attribute Y
+
+"Ljava/io/PrintStream;" "java/lang/System" "out"  static-field
+"(Ljava/lang/Object;)V" "java/io/PrintStream" "println" method
+
+Y "call2" string
+Y "Hello_World!" string
 

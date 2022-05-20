@@ -19,8 +19,8 @@ Y 2 sections I text Y 1 section I data Y 2 section ;
 Y $100 dup text base ! text ptr !
 Y $400 dup data base ! data ptr !
 
-I i8 Y text w8 Y ;
-I i16 Y text w16 Y ;
+I i8 Y w8 Y ;
+I i16 Y w16 Y ;
 I ip Y text ptr I Y I ip@ Y ip @ I ip! Y ip ! ;
 I dp Y data ptr I Y I dp@ Y dp @ I dp! Y dp ! ;
 
