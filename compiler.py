@@ -16,7 +16,9 @@ class Compiler:
 
         self._f = f
         self._sections = []
+
         self._magic_dst = 0
+        self._endian = "big"     
 
     def write_section(self, section, add):      
         size = len(add)
@@ -42,10 +44,14 @@ class Compiler:
         self._compile(self._macros["lit"])
 
     def wx(self, nbytes):
-        section = self._sections[self._magic_dst]
         val = self._stack.pop()
-        self.write_section(section, val.to_bytes(nbytes, byteorder="little", signed=val < 0))
+        bytes = val.to_bytes(nbytes, byteorder=self._endian, signed=val < 0)
 
+        if self._magic_dst >= 0:
+            self.write_section(self._sections[self._magic_dst], bytes)
+        else:
+            self._f.write(bytes)
+        
     def macro_call_word(self, word): # yellow
         if type(word.val) == int:
             self._stack.append(word.val)
@@ -76,14 +82,11 @@ class Compiler:
 
         elif word.val == "i!":
             loc = self._stack.pop()
-            val = self._stack.pop().to_bytes(1, byteorder="little", signed=True)[0]
+            val = self._stack.pop().to_bytes(1, byteorder=self._endian, signed=True)[0]
             self._sections[0]["buf"][loc - self._sections[0]["base"]] = val
 
-        elif word.val == "w8":
-            self.wx(1)
-
-        elif word.val == "w16":
-            self.wx(2)
+        elif word.val in ("w8", "w16", "w32", "w64"):
+            self.wx(int(word.val[1:]) // 8)
 
         elif word.val == "@":
             var = self._stack.pop()
@@ -99,6 +102,9 @@ class Compiler:
         elif word.val == "len":
             self._stack.append(len(self._stack.pop()))
 
+        elif word.val == ".S":
+            print("magic=", self._magic_dst, self._stack)
+
         elif word.val == "cpy":
             self.write_section(self._sections[self._magic_dst], self._stack.pop().encode())
 
@@ -108,8 +114,11 @@ class Compiler:
         elif word.val == "section":
             self._stack.append(self._sections[self._stack.pop() - 1])
 
-        elif word.val in ("base", "ptr", "buf"):
+        elif word.val in ("base", "ptr", "buf", "little", "big"):
             self._stack.append(word.val)
+
+        elif word.val == "endian":
+            self._endian = self._stack.pop()
 
         elif word.val == "write": 
             section = self._stack.pop()
@@ -135,7 +144,7 @@ class Compiler:
         if word.val in self._macros:
             self._compile(self._macros[word.val])
         elif word.val in self._definitions:
-            offset = (self._definitions[word.val] - self._sections[0]["ptr"] - 3).to_bytes(2, byteorder="little", signed=True)
+            offset = (self._definitions[word.val] - self._sections[0]["ptr"] - 3).to_bytes(2, byteorder=self._endian, signed=True)
 
             if next.val == ';': # tail rec
                 op = self._macros["jmp"]
@@ -179,10 +188,9 @@ class Compiler:
                 print(self._depth * "\t", curr.colour, curr.val)
 
             if curr.colour == Colour.MACHINE:
-                if self._magic_dst >= 0:
-                    self.write_section(self._sections[self._magic_dst], [curr.val]) # grey
-                else:
-                    self._f.write(bytes([curr.val]))
+                self._stack.append(curr.val)
+                self.wx(1)
+
 
             elif curr.colour == Colour.DEFINITION:
                 self._definitions[curr.val] = self._sections[0]["ptr"] # red
@@ -207,7 +215,7 @@ class Compiler:
     def compile(self):
         self._compile(self._tokens)
         self._compile(self._macros['compile'])
-
+        #print(self._sections)
 
 if __name__ == '__main__':
     import sys
@@ -215,5 +223,5 @@ if __name__ == '__main__':
     tokens = Lexer(open(sys.argv[1])).all
 
     Formatter(tokens).write(open(f"{base}.html", "w"))
-    Compiler(tokens, open(f"{base}.com", "wb"), False).compile()
+    Compiler(tokens, open(f"hello.class", "wb"), False).compile()
 

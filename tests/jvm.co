@@ -1,62 +1,92 @@
 W JVM
 W This is a test to replicate the class file format
 
-Y 3 sections I code Y 1 section I constpool Y 2 section ;
+W Classfile format ------------------------------------------------------------
+Y 2 sections big endian I binary Y 0 I code Y 1 I constpool Y 2 ;
 
-I compile Y 0 magic!
+I compile W begin taping out header and sections to file 
+Y binary magic! W set behaviour of grey numbers
 M ca fe ba be W magic number
 M 00 00 00 31 W major / minor version
-M 00 18 W constant pool count
-Y constpool write 
+Y #constants @ w16 W constant pool count
+Y constpool section write 
 M 00 01 W access flags bitmask
 M 00 03 W this index class entry
 M 00 04 W super index class entry
 M 00 00 W interface count + empty table
 M 00 00 W field count + empty table
 M 00 01 W method count
-
 M 00 09 W access flags
 M 00 05 W name index
 M 00 06 W descriptor index
 M 00 01 W attributes count
-
 M 00 07 W name index (Code)
-M 00 00 00 2c W attribute length
+Y code section ptr @ 12 + w32 W attribute length
 M 00 0a W max stack
 M 00 0a W max locals
-M 00 00 00 20 W code length
-Y code write W the actual code
+Y code section ptr @ w32 W code length
+Y code section write W the actual code
 M 00 00 W exception table length
 M 00 00 W attributes count 
 M 00 00 W ?? Y ;
 
-Y 1 magic! W the code M
-A8 00 06 A7 00 1C B2 00 08 12 01 B6 00 09 A8 00 06 4B A9 00 B2 00 08 12 02 B6 00 09 4B A9 00 B1
 
-I str Y dup len M 01 00 Y w8 cpy ; W todo proper endianness 
+W Hello world Code ------------------------------------------------------------
+W JVM Core
+I call M a8 I jmp M a7 I getstatic M b2 I ldc M 12 I invokevirtual M b6
+I astore_0 M 4b I ret M a9 I return M b1 I ; Y astore_0 ret M 00 Y ; I swap M 5f 
 
-Y 2 magic! W the constantpool M
-08 00 17 
-08 00 16 
-07 00 15 
-07 00 14 
-W 01 00 04 6D 61 69 6E W main M
-Y "main" str M
-01 00 16 28 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 56 W ([Ljava/lang/String;) M
-01 00 04 43 6F 64 65 W Code M
-09 00 0F 00 10 
-0A 00 0A 00 0B 
-07 00 0E 
-0C 00 0C 00 0D 
-01 00 07 70 72 69 6E 74 6C 6E W println M
-01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 29 56 W (Ljava/lang/Object;) M
-01 00 13 6A 61 76 61 2F 69 6F 2F 50 72 69 6E 74 53 74 72 65 61 6D W java/io/PrintStream M
-07 00 13
-0C 00 11 00 12 
-01 00 03 6F 75 74 W out M
-01 00 15 4C 6A 61 76 61 2F 69 6F 2F 50 72 69 6E 74 53 74 72 65 61 6D 3B W java/io/PrintStream M
-01 00 10 6A 61 76 61 2F 6C 61 6E 67 2F 53 79 73 74 65 6D W java/lang/System M 
-01 00 10 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 W java/lang/Object M 
-01 00 05 68 65 6C 6C 6F W hello M 
-01 00 05 63 61 6C 6C 32 W call2 M 
-01 00 0C 48 65 6C 6C 6F 20 57 6F 72 6C 64 21 W Hello World!
+W Runtime Layer
+I puts Y getstatic M 00 08 G swap Y invokevirtual M 00 09 Y ;
+
+I str1 Y ldc M 01 Y ; I str2 Y ldc M 02 Y ;
+I L1 M 00 06 I L2 M 00 06 I L3 M 00 1e Y ; W sneaky forward references
+
+Y code magic! W grey numbers to section 1 
+Y str1 puts
+Y call L1
+Y jmp L3 
+R L1 Y str1 Y puts Y call L2 Y ; 
+R L2 Y str1 Y puts ;
+R L3 Y return
+
+
+W Constant pool 🏊 -------------------------------------------------------------
+I #constants Y constpool section "size" ;
+I #constants++ Y #constants @ 1 + #constants ! ;
+1 #constants !
+
+I 1arg Y w16 #constants++ I 2args Y w16 w16 #constants++ ;
+
+I str Y dup len M 01 Y 1arg cpy 
+I strref M 08 Y 1arg I classref M 07 Y 1arg
+I fieldref W nametype class M 09 Y 2args 
+I methodref W nametype class M 0a Y 2args
+I nametype W type name M 0c Y 2args
+Y ;
+
+Y constpool magic! W the constantpool M
+Y $17 strref
+Y $16 strref 
+Y $15 classref 
+Y $14 classref
+Y "main" str Y
+"([Ljava/lang/String;)V" str 
+"Code" str Y 
+$10 $f fieldref 
+$b $a methodref
+Y $0e classref Y
+$d $c nametype
+"println" str 
+"(Ljava/lang/Object;)V" str 
+"java/io/PrintStream" str Y
+$13 classref 
+$12 $11 nametype
+Y "out" str Y
+"Ljava/io/PrintStream;" str Y
+"java/lang/System" str 
+"java/lang/Object" str 
+"hello" str
+"call2" str
+"Hello_World!" str W todo spaces in string literals
+
