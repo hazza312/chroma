@@ -8,8 +8,8 @@ I compile W begin taping out header and sections to file
 Y binary magic! W set behaviour of grey numbers
 M ca fe ba be W magic number
 M 00 00 00 31 W major / minor version
-Y #constants @ w16 W constant pool count
-Y constpool section write 
+Y #constants @ binary w16 W constant pool count
+Y constpool write 
 M 00 01 W access flags bitmask
 M 00 02 W this index class entry
 M 00 04 W super index class entry
@@ -21,11 +21,11 @@ M 00 05 W name index
 M 00 06 W descriptor index
 M 00 01 W attributes count
 M 00 07 W name index (Code)
-Y code section ptr @ 12 + w32 W attribute length
+Y code ptr @ 12 + binary w32 W attribute length
 M 00 0a W max stack
 M 00 0a W max locals
-Y code section ptr @ w32 W code length
-Y code section write W the actual code
+Y code ptr @ binary w32 W code length
+Y code write W the actual code
 M 00 00 W exception table length
 M 00 00 W attributes count 
 M 00 00 W ?? Y ;
@@ -52,14 +52,21 @@ R L3 Y return
 
 
 W Constant pool 🏊 -------------------------------------------------------------
-I #constants Y constpool section "size" I cp@ Y #constants @ 
+I #constants Y constpool "size" I cp@ Y #constants .S @ 
 I #constants++ Y cp@ 1 + #constants ! ;
+
 1 #constants !
 
-I 1arg Y w16 #constants++ I 2args Y w16 w16 #constants++ ;
+I cp Y constpool ptr I cp8 Y constpool w8 I cp16 Y .S constpool .S w16 ;
+I 1arg Y cp16 #constants++ I 2args Y cp16 cp16 #constants++ ;
+I str Y 1 cp8 dup len 1arg constpool cpy I 
+strref Y 08 cp8 Y 1arg 
 
-I str Y dup len M 01 Y 1arg cpy I strref M 08 Y 1arg I string Y str cp@ 1 - strref ;
-I classref M 07 Y 1arg I fieldref M 09 Y 2args I methodref M 0a Y 2args I nametype M 0c Y 2args
+I string Y str cp@ 1 - strref ;
+I classref Y 07 cp8 1arg 
+I fieldref Y 09 cp8 2args 
+I methodref Y $0a cp8 2args 
+I nametype Y $0c cp8 2args
 I class W class Y str cp@ 1 - classref
 
 I static-field W type class field Y str class str 

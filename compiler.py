@@ -43,12 +43,12 @@ class Compiler:
         self._stack.append(x)
         self._compile(self._macros["lit"])
 
-    def wx(self, nbytes):
+    def write_word(self, nbytes, section):
         val = self._stack.pop()
         bytes = val.to_bytes(nbytes, byteorder=self._endian, signed=val < 0)
 
-        if self._magic_dst >= 0:
-            self.write_section(self._sections[self._magic_dst], bytes)
+        if section >= 1:
+            self.write_section(self._sections[section -1 ], bytes)
         else:
             self._f.write(bytes)
         
@@ -68,6 +68,9 @@ class Compiler:
         elif word.val == "magic!":
             self._magic_dst = self._stack.pop() - 1
 
+        elif word.val == "magic@":
+            self._stack.append(self._magic_dst + 1)
+
         elif word.val == "+":
             self._stack.append(self._stack.pop() + self._stack.pop())
 
@@ -78,7 +81,7 @@ class Compiler:
             var = self._stack.pop()
             section = self._stack.pop()
             val = self._stack.pop()
-            section[var] = val
+            self._sections[section - 1][var] = val
 
         elif word.val == "i!":
             loc = self._stack.pop()
@@ -86,12 +89,13 @@ class Compiler:
             self._sections[0]["buf"][loc - self._sections[0]["base"]] = val
 
         elif word.val in ("w8", "w16", "w32", "w64"):
-            self.wx(int(word.val[1:]) // 8)
+            self.write_word(int(word.val[1:]) // 8, self._stack.pop())
 
         elif word.val == "@":
+            print(self._stack)
             var = self._stack.pop()
-            section = self._stack.pop()
-            self._stack.append( section[var] )
+            section = self._stack.pop() - 1
+            self._stack.append( self._sections[section][var] )
 
         elif word.val == "drop":
             self._stack.pop()
@@ -103,10 +107,12 @@ class Compiler:
             self._stack.append(len(self._stack.pop()))
 
         elif word.val == ".S":
-            print("magic=", self._magic_dst, self._stack)
+            print("magic=", self._magic_dst, self._stack, self._sections)
 
         elif word.val == "cpy":
-            self.write_section(self._sections[self._magic_dst], self._stack.pop().encode())
+            dst = self._stack.pop()
+            string = self._stack.pop()
+            self.write_section(self._sections[dst - 1], string.encode())
 
         elif word.val == "swap":
             self._stack[-1], self._stack[-2] = self._stack[-2], self._stack[-1]
@@ -121,7 +127,7 @@ class Compiler:
             self._endian = self._stack.pop()
 
         elif word.val == "write": 
-            section = self._stack.pop()
+            section = self._sections[self._stack.pop() - 1]
             self._f.write(section["buf"][:section["ptr"]])
 
         elif word.val == "padding":
@@ -189,7 +195,7 @@ class Compiler:
 
             if curr.colour == Colour.MACHINE:
                 self._stack.append(curr.val)
-                self.wx(1)
+                self.write_word(1, self._magic_dst + 1)
 
 
             elif curr.colour == Colour.DEFINITION:
@@ -211,11 +217,10 @@ class Compiler:
 
             i += 1
 
-
     def compile(self):
         self._compile(self._tokens)
         self._compile(self._macros['compile'])
-        #print(self._sections)
+
 
 if __name__ == '__main__':
     import sys
@@ -223,5 +228,5 @@ if __name__ == '__main__':
     tokens = Lexer(open(sys.argv[1])).all
 
     Formatter(tokens).write(open(f"{base}.html", "w"))
-    Compiler(tokens, open(f"hello.class", "wb"), False).compile()
+    Compiler(tokens, open(f"hello.class", "wb"), True).compile()
 
