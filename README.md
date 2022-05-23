@@ -1,5 +1,20 @@
 # chroma
-A retargetable compiler heavily inspired by [colorForth](https://en.wikipedia.org/wiki/ColorForth). Currently target for testing is x86/16-bit/MS-DOS/COM executable. Work in progress!
+A retargetable compiler heavily inspired by [colorForth](https://en.wikipedia.org/wiki/ColorForth). Currently experimenting on different platforms with some very simple tests. Work in progress!
+
+## Platforms
+
+|Date|Bits|Architecture|Platform|Status|
+|-|-|-|-|-|
+|1974|8|8080/Z80|CP/M| ? |
+|1981|16|x86|MSDOS| ✔️ proof of concept executable|
+|1994|32|JVM|-| ⚠️ abandoned for now. Initial plan to 'exploit' [jsr/ret](https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.jsr) instructions for word calls in a single method proved unworkable (difficulty in nesting, recursion etc). Want to return later to JVM as forth could map nicely to the stack machine. Native methods (called with `invokeXX`) work slightly different than words -- incompatible behaviour with stack frames/operand stack, and require method arguments/return types to be declared in the class file. Possible to emulate a return stack with an array and using switch tables, but a bit messy.|
+|1996-|8|AVR|Embedded| ?|
+|2003|64|x86|Linux| ? |
+|2017|32/64|WebAssembly|Web| ? -- could map nicely as also a stack machine, though run into same issues as with JVM |
+
+## Demo Applications
+todo
+
 
 ## Taster
 A small sample that compiles and runs on the MSDOS target. In a few sections, this defines:
