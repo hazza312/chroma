@@ -1,0 +1,83 @@
+W # Compiler defined
+W These words are pre-defined and available for use as directives/in macros
+
+W Binary handling
+I sections W (n -- ) initialise n compiler sections
+I endian W (big|little --) set the endinanness of the compiler
+I big W (-- big) 
+I little W (-- little)
+I write W (section# -- ) write section# to output file
+I padding W (n --) write n bytes of padding directly to output binary
+I magic! W (section# --) set the section where magic (grey) numbers should be written R #todo
+
+W Section handling
+I w8/w16/w32 W (val section# -- ) write val as n-bit word to section#
+I ! W (val section var -- ) store val to section variable
+I @ W (section var -- val) fetch val from section variable
+I i! W (val ptr --) write val as 8-bit byte to position ptr in section 1 R #todo
+I cpy W (str section# -- ) copy a string, appending to the end of section#
+
+W Compiler stack
+I swap W (a b -- b a) swap the top two items on the compiler stack
+I dup W (a -- a a) duplicate TOS
+I drop W (a -- ) drop TOS
+
+W Arithmetic
+I + W (a b -- a+b) add the top two elements on the stack
+I - W (a b -- a-b) subtract TOS from previously pushed value
+
+W Misc
+I len W (str -- n) push the length of a string 
+I .S W ( -- ) display the current state of the stack  
+
+
+
+W # Language layer
+W The compiler requires a platform implement the following macros:
+
+I compile W ( -- ) begins the process of assembling binary after all source has been read and compiled. The sections contain the data to be written to the final binary. A simple implementation that directly writes two sections to the output:
+==> Y text write 0 padding data write ;
+
+I lit W (n --) producing code to be emitted such that the numeric literal on the R compiler W stack should be pushed to the R run-time W stack. This will likely require some machine code. An example implementation could be
+==> machine-dup G dup W load immediate opcode M b8 Y code W section Y m16 ;
+
+I str W (str --) a string literal on the R compiler W stack should be compiled into the binary, and code output such that at runtime, a reference to the literal is placed on the R run-time W stack. Example: an implementation that appends string to a "data" section
+==> W emit code to push address Y data ptr @ lit W copy to section Y data cpy ;
+
+I jmp W (addr --) an absolute address on the R compiler W stack to be compiled into a jump. Depending on the architecture or size of the call, this could be compiled as an absolute or relative call, at the platform's discretion. An example of an 16-bit relative jump implementation:
+==> calculate relative offset Y text ptr @ - 03 - W opcode M e9 W offset Y code m16
+
+I call W (addr --) an absolute address on the R compiler W stack to be compiled into a call. Relative/absolute nature at platform's discretion. This must be a call to be later  matched with Y ; W -- it is given this cannot be optimised to a Y jmp W (immediate token is not ;). An example of an 16-bit relative call implementation:
+==> calculate relative offset Y text ptr @ - 03 - W opcode M e8 W offset Y code m16 ; W
+
+I vardef W ( -- ref) W define a new variable R #todo
+I varref W ( ref -- ) W push a reference onto the R machine W stack. R #todo W
+
+
+The following macros are not directly required by the compiler, but should be written to implement the rest of the language for usercode:
+
+W Control structures
+I ; W ( -- ) typically just emit a single opcode for a machine return, example:
+==> M c3 Y ;
+
+I if W (-- ref) always matched with Y then W . The implementation should emit a branch instruction with a placeholder address. On the R compiler W stack, a reference should be pushed to this placeholder value in the code section. The Y then W definition can then touchup this offset when the branch destination is known. An example:
+==> G test W opcode & placeholder M 74 00 W push touchup location Y ip@ 01 - ; 
+
+I then W (ref --) matching a previous Y if W reference. TOS will be a reference to the byte/word in the code section where the offset needs to be updated. An example implementation:
+==> W dup calculate relative offset Y dup 01 + ip@ swap - swap W write Y i! ;
+  
+I for W ( -- ref) machine-specific code to implement looping. TOS of the R machine W stack should be consumed -- this corresponds to the number of iterations. Similar to if, should push a reference to the current location to the R compiler W stack, to be matched and consumed with a later Y next W . Must support nesting fors, the R machine return W stack could be used to achieve this. 
+
+I next W ( ref -- ) the end of the last loop. Loop back to ref as placed by previous Y for W on the R compiler W stack. 
+
+W Stack operations
+I + W (a b -- a+b) add the top two elements on the stack
+I - W (a b -- a-b) subtract TOS from previously pushed value
+I swap W (a b -- b a) swap the top two items on the compiler stack
+I dup W (a -- a a) duplicate TOS
+I drop W (a -- ) drop TOS
+
+
+
+
+ 
