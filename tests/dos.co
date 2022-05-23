@@ -2,16 +2,17 @@ W i386/16 Core
 W stack I nip M 46 46 I drop M ad I dup M 4e 4e 89 04 
 W numeric I lit G dup M b8 Y i16 I + M 03 04 G nip I - M 93 ad 29 d8 I 1+ M 40 I 1- M 48    
 W logic I and M 23 04 G nip I or M 0b 04 G nip I xor M 33 04 G nip I rol M 51 91 ad d3 c0 59 
-W branch I jmp M e9 M 00 00  I jnz M 75 00  I jz M 74 00 I jns M 79 00  I js M 78 00  I test M 85 c0 
-W flow I call M e8 00 00  I ; M c3  I hlt M F4 
+W branch I jnz M 75 00  I jz M 74 00 I jns M 79 00  I js M 78 00  I test M 85 c0 
+W flow I ; M c3  I hlt M F4 
 W memory I ! M 93 ad 89 07 ad I @ M 93 8b 07  
 
 
 W Language implementation
-I -if Y .S G test jns Y ip@ .S 1 - G drop Y .S ; I if G test jz Y ip@  1 - .S ; 
-I then Y .S dup 1 + ip@ swap - swap  i! G drop Y ; 
-I for M 51 91 G drop Y ip@
-I next M e2 Y ip@ - 1 - i8 M 59 Y ;
+I -if G test jns Y ip@ 1 - G drop Y ; I if G test jz Y ip@  1 - ; 
+I then Y dup 1 + ip@ swap - swap  i! G drop Y ; 
+I for M 51 91 G drop Y ip@ I next M e2 Y ip@ - 1 - i8 M 59 
+I call Y ip@ - 3 - M e8 Y i16 I jmp Y ip@ - 3 - M e9 Y i16 
+I str Y dp@ lit data cpy Y ;
 
 
 W i386/16/DOS COM Binary Format
@@ -29,7 +30,7 @@ W make binary Y text write padding data write ;
 
 
 W i386/16/DOS Runtime
-R init W setup data stack M be 00 e8 G R placeholder G jmp W to main defined later
+R init W setup data stack M be 00 e8 G R placeholder G Y 0 G jmp W to main defined later
 I int21h M cd 21 G drop Y ; 
 R emit M 92 b4 02 G int21h ; R space G $20 emit ; R cr G $d $a emit emit ;
 R puts M 92 b4 09 G int21h ; R hexchar G dup 10 - -if $30 + ; then $37 + ;

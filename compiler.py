@@ -68,9 +68,6 @@ class Compiler:
         elif word.val == "magic!":
             self._magic_dst = self._stack.pop() - 1
 
-        elif word.val == "magic@":
-            self._stack.append(self._magic_dst + 1)
-
         elif word.val == "+":
             self._stack.append(self._stack.pop() + self._stack.pop())
 
@@ -88,11 +85,16 @@ class Compiler:
             val = self._stack.pop().to_bytes(1, byteorder=self._endian, signed=True)[0]
             self._sections[0]["buf"][loc - self._sections[0]["base"]] = val
 
+        elif word.val == "i16!":
+            loc = self._stack.pop()
+            val = self._stack.pop().to_bytes(2, byteorder=self._endian, signed=True)
+            start = loc - self._sections[0]["base"]
+            self._sections[0]["buf"][start:start+2] = val
+
         elif word.val in ("w8", "w16", "w32", "w64"):
             self.write_word(int(word.val[1:]) // 8, self._stack.pop())
 
         elif word.val == "@":
-            print(self._stack)
             var = self._stack.pop()
             section = self._stack.pop() - 1
             self._stack.append( self._sections[section][var] )
@@ -149,9 +151,9 @@ class Compiler:
         consume = 0
         if word.val in self._macros:
             self._compile(self._macros[word.val])
-        elif word.val in self._definitions:
-            offset = (self._definitions[word.val] - self._sections[0]["ptr"] - 3).to_bytes(2, byteorder=self._endian, signed=True)
 
+        elif word.val in self._definitions:
+            self._stack.append(self._definitions[word.val])
             if next.val == ';': # tail rec
                 op = self._macros["jmp"]
                 consume = 1
@@ -159,8 +161,6 @@ class Compiler:
                 op = self._macros["call"]
 
             self._compile(op)
-            self._sections[0]["ptr"] -= 2
-            self.write_section(self._sections[0], offset)
 
         elif word.val in self._variables:
             self.lit(self._variables[word.val])        
@@ -169,9 +169,8 @@ class Compiler:
             self.lit(word.val)
 
         elif word.val[0] == '"' and word.val[-1] == '"':
-            addr = self._sections[1]["ptr"]
-            self.write_section(self._sections[1], word.val[1:-1].encode())
-            self.lit(addr)
+            self._stack.append(word.val[1:-1])
+            self._compile(self._macros["str"])
 
         else:
             raise ValueError(f"{word.val} is undefined")
@@ -228,5 +227,5 @@ if __name__ == '__main__':
     tokens = Lexer(open(sys.argv[1])).all
 
     Formatter(tokens).write(open(f"{base}.html", "w"))
-    Compiler(tokens, open(f"hello.class", "wb"), True).compile()
+    Compiler(tokens, open(f"hello.class", "wb"), False).compile()
 
