@@ -53,31 +53,41 @@ Y code write Y ;
 
 W x64/Linux/Core --------------------------------------------------------------
 Y code magic!
-I ip@ Y code ptr @ I i32 Y code w32
+I ip@ Y code ptr @ I i32 Y code w32 I i8 Y code w8
 
+I swap M 48 8b 1e 48 89 06 48 93 Y ;
 I dup M 4c 29 fe 48 89 06 I drop M 48 ad I nip M 4c 01 fe
 I lit G dup M b8 Y code w32
 I ; M c3
 I jmp Y code ptr @ - 5 - M e9 Y i32 ; 
 I call Y code ptr @ - 5 - M e8 Y i32 ;
 I + M 48 93 G drop M 48 01 d8 
-I - M 48 93 G drop M 48 01 d8 48 93
+I - M 48 93 G drop M 48 29 d8
 I test M 48 85 c0 G drop
 I if G test M 0f 84 Y ip@ M 00 00 00 00
-I then Y dup 1 + ip@ swap - swap i32!
+I then Y dup 1 + ip@ 3 - swap - swap i32!
+
+I for M 51 48 91 48 ad Y ip@ ;
+I next Y dup ip@ - 2 - M e2 Y i8 M 59 Y ;
 
 I str Y ;
-
+I and Y ;
+I shr Y ;
 
 
 W Runtime --------------------------------------------------------------------- 
-R emit G dup M b8 01 00 00 00 bf 01 00 00 00 ba 01 00 00 00 0f 05 G drop drop G ;
+R emit G dup M 51 b8 01 00 00 00 bf 01 00 00 00 ba 01 00 00 00 0f 05 59 G drop drop G ;
+R space G $20 emit ; R cr G $0a emit ; R exit M bf 3c 00 00 00 48 97 0f 05 G ;
+R hexdigit G dup $a - -if $31 + ; then $41 + ;
+R .H G dup $f0 and 4 shr hexdigit emit $0f and hexdigit emit ;
+
 
 W User Program   --------------------------------------------------------------
-R blah G blah ;
-R digits G $30 R loop G dup $3a - if dup emit 1 + loop ; then drop ; 
+R chars W from num G for dup emit 1 + next ; 
+
 R main 
-R init W r15=16 M 41 bf 10 00 00 00 W init rsi stack top M be 00 90 12 00 
-G 1 if $30 1 + emit then $30 2 + emit digits blah
+R init W r15=8 M 41 bf 08 00 00 00 W init rsi stack top M be 00 90 12 00 
+G $30 10 chars W , G $41 26 chars cr 0 exit
+
 
 
