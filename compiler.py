@@ -71,6 +71,9 @@ class Compiler:
         elif word.val == "+":
             self._stack.append(self._stack.pop() + self._stack.pop())
 
+        elif word.val == "*":
+            self._stack.append(self._stack.pop() * self._stack.pop())
+
         elif word.val == "-":
             self._stack.append(-self._stack.pop() + self._stack.pop())
 
@@ -90,6 +93,12 @@ class Compiler:
             val = self._stack.pop().to_bytes(2, byteorder=self._endian, signed=True)
             start = loc - self._sections[0]["base"]
             self._sections[0]["buf"][start:start+2] = val
+
+        elif word.val == "i32!":
+            loc = self._stack.pop()
+            val = self._stack.pop().to_bytes(4, byteorder=self._endian, signed=True)
+            start = loc - self._sections[0]["base"]
+            self._sections[0]["buf"][start:start+4] = val
 
         elif word.val in ("w8", "w16", "w32", "w64"):
             self.write_word(int(word.val[1:]) // 8, self._stack.pop())
@@ -227,5 +236,5 @@ if __name__ == '__main__':
     tokens = Lexer(open(sys.argv[1])).all
 
     Formatter(tokens).write(open(f"{base}.html", "w"))
-    Compiler(tokens, open(f"hello.class", "wb"), False).compile()
+    Compiler(tokens, open(f"{base}.out", "wb"), False).compile()
 
