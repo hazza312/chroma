@@ -1,0 +1,83 @@
+W x64/Linux/ELF ---------------------------------------------------------------
+Y 2 sections little endian I binary Y 0 I code Y 1 I data Y 2 ;
+
+I vma-load Y $028000 I elf-head-size Y $40 I phead-size Y $38
+I code-file-offset Y phead-size 2 * elf-head-size + 
+I code-load-start Y vma-load code-file-offset + ;
+I code-size Y code ptr @ code base @ -
+I b64 Y binary w64 Y ;
+
+Y code-load-start code base ! Y code-load-start code ptr !
+
+I compile
+Y 0 magic!
+
+W ELF headers M
+M 7f 45 4c 46 W magic
+M 02 01 01 00 W 64-bit, little endian, version, system v
+M 00 00 00 00 00 00 00 00 W abi version, padding 
+M 02 00 3e 00 W shared object, amd x86-64
+M 01 00 00 00 W version 
+Y main b64 W entry point
+M 40 00 00 00 00 00 00 00 W program header start
+M 00 00 00 00 00 00 00 00 W section header start (not included)
+M 00 00 00 00 W architecture flags (none?)
+M 40 00 W size this header
+M 38 00 W size of program header entry
+M 02 00 W number of entries in program header table
+M 00 00 W size of a section header table entry
+M 00 00 W number of section header entries
+M 00 00 W index in section header with section names
+
+W Program header -- code
+M 01 00 00 00 W loadable segment
+M 05 00 00 00 W not writeable (bit0=X, bit1=W, bit2=R)
+Y 00 b64 W segment offset in file image
+Y vma-load b64 W VA of segment in memory
+Y vma-load b64 W physical address
+Y code-size b64 W size of segment bytes in file image
+Y code-size b64 W size of segment bytes in memory
+M 00 00 20 00 00 00 00 00 W alignment
+
+W Program header -- data
+M 01 00 00 00 W loadable segment
+M 06 00 00 00 W flags  (bit0=X, bit1=W, bit2=R)
+M 00 00 00 00 00 00 00 00 W segment offset in file image
+Y vma-load $100000 + b64 W VA of segment in memory
+Y vma-load $100000 + b64 W physical address
+M 00 00 00 00 00 00 00 00 W size of segment bytes in file image
+Y $1000 b64 W size of segment bytes in memory
+Y $1000 b64 W alignment
+Y code write Y ;
+
+
+W x64/Linux/Core --------------------------------------------------------------
+Y code magic!
+I ip@ Y code ptr @ I i32 Y code w32
+
+I dup M 4c 29 fe 48 89 06 I drop M 48 ad I nip M 4c 01 fe
+I lit G dup M b8 Y code w32
+I ; M c3
+I jmp Y code ptr @ - 5 - M e9 Y i32 ; 
+I call Y code ptr @ - 5 - M e8 Y i32 ;
+I + M 48 93 G drop M 48 01 d8 
+I - M 48 93 G drop M 48 01 d8 48 93
+I test M 48 85 c0 G drop
+I if G test M 0f 84 Y ip@ M 00 00 00 00
+I then Y dup 1 + ip@ swap - swap i32!
+
+I str Y ;
+
+
+
+W Runtime --------------------------------------------------------------------- 
+R emit G dup M b8 01 00 00 00 bf 01 00 00 00 ba 01 00 00 00 0f 05 G drop drop G ;
+
+W User Program   --------------------------------------------------------------
+R blah G blah ;
+R digits G $30 R loop G dup $3a - if dup emit 1 + loop ; then drop ; 
+R main 
+R init W r15=16 M 41 bf 10 00 00 00 W init rsi stack top M be 00 90 12 00 
+G 1 if $30 1 + emit then $30 2 + emit digits blah
+
+
