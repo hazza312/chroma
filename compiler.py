@@ -114,7 +114,7 @@ class Compiler:
             self._stack.append(len(self._stack.pop()))
 
         elif word.val == ".S":
-            print("magic=", self._magic_dst, self._stack, self._sections)
+            print("magic=", self._magic_dst, self._stack)
 
         elif word.val == "cpy":
             dst = self._stack.pop()
