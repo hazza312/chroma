@@ -22,13 +22,17 @@ class Compiler:
         
         self._unresolved = {"jmp": [], "call": []}
 
-    def write_section(self, section, add):      
-        size = len(add)
-        start = section["ptr"] - section["base"]
-        end = start + size
-        section["buf"].extend(bytes([0]) * (len(section["buf"]) - end))
-        section["buf"][start:end] = add
-        section["ptr"] += size
+    def write_section(self, section, add):  
+        section_size = len(section["buf"])   
+        write_size = len(add)
+        write_ptr = section["ptr"] - section["base"]
+        
+        if write_ptr + write_size > section_size:
+            extend = write_ptr + write_size - section_size 
+            section["buf"].extend(bytes([0]) * extend)
+        
+        section["buf"][write_ptr:write_ptr+write_size] = add
+        section["ptr"] += write_size
         
     def macro_define_word(self, name, i, tokens): # cyan
         self._macros[name] = []
