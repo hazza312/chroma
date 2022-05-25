@@ -1,24 +1,30 @@
 W x64/Linux/ELF ---------------------------------------------------------------
 Y 2 sections little endian I binary Y 0 I code Y 1 I data Y 2 ;
 
-I vma-load Y $028000 I elf-head-size Y $40 I phead-size Y $38
+W for now, just give everything a page. OS sorts return stack
+I vma-load Y $10000 I data-start Y $11000 I stack-start Y $12000 I section-align Y $1000
+
+I size W section Y dup ptr @ swap base @ -
+I elf-head-size Y $40 I phead-size Y $38
+
 I code-file-offset Y phead-size 2 * elf-head-size + 
 I code-load-start Y vma-load code-file-offset + ;
-I code-size Y code ptr @ code base @ -
+I data-file-offset Y code-file-offset code size + 
 I b64 Y binary w64 Y ;
 
 Y code-load-start code base ! Y code-load-start code ptr !
+Y data-start data base ! Y data-start data ptr !
 
 I compile
-Y 0 magic!
 
+Y 0 magic!
 W ELF headers M
 M 7f 45 4c 46 W magic
 M 02 01 01 00 W 64-bit, little endian, version, system v
 M 00 00 00 00 00 00 00 00 W abi version, padding 
 M 02 00 3e 00 W shared object, amd x86-64
 M 01 00 00 00 W version 
-Y main b64 W entry point
+Y init b64 W entry point
 M 40 00 00 00 00 00 00 00 W program header start
 M 00 00 00 00 00 00 00 00 W section header start (not included)
 M 00 00 00 00 W architecture flags (none?)
@@ -32,23 +38,24 @@ M 00 00 W index in section header with section names
 W Program header -- code
 M 01 00 00 00 W loadable segment
 M 05 00 00 00 W not writeable (bit0=X, bit1=W, bit2=R)
-Y 00 b64 W segment offset in file image
-Y vma-load b64 W VA of segment in memory
-Y vma-load b64 W physical address
-Y code-size b64 W size of segment bytes in file image
-Y code-size b64 W size of segment bytes in memory
-M 00 00 20 00 00 00 00 00 W alignment
+Y code-file-offset b64 W segment offset in file image
+Y vma-load $b0 + b64 W VA of segment in memory
+Y vma-load $b0 + b64 W physical address
+Y code size b64 W size of segment bytes in file image
+Y code size b64 W size of segment bytes in memory
+Y section-align b64 W alignment
 
 W Program header -- data
 M 01 00 00 00 W loadable segment
 M 06 00 00 00 W flags  (bit0=X, bit1=W, bit2=R)
-M 00 00 00 00 00 00 00 00 W segment offset in file image
-Y vma-load $100000 + b64 W VA of segment in memory
-Y vma-load $100000 + b64 W physical address
-M 00 00 00 00 00 00 00 00 W size of segment bytes in file image
-Y $1000 b64 W size of segment bytes in memory
-Y $1000 b64 W alignment
-Y code write Y ;
+Y data-file-offset b64 W segment offset in file image
+Y data-start data-file-offset + b64 W VA of segment in memory
+Y data-start data-file-offset + b64 W physical address
+Y data size b64 W size of segment bytes in file image
+Y stack-start data-start - b64 W size of segment bytes in memory
+Y section-align b64 W alignment
+Y code write 
+Y data write Y ;
 
 
 W x64/Linux/Core --------------------------------------------------------------
@@ -64,30 +71,33 @@ I call Y code ptr @ - 5 - M e8 Y i32 ;
 I + M 48 93 G drop M 48 01 d8 
 I - M 48 93 G drop M 48 29 d8
 I test M 48 85 c0 G drop
-I if G test M 0f 84 Y ip@ M 00 00 00 00
-I then Y dup 1 + ip@ 3 - swap - swap i32!
-
+I if G test M 74 Y ip@ M 00 
+I !if G test M 75 Y ip@ M 00
+I -if G test M 79 Y ip@ M 00
+I then Y dup 1 + ip@  swap - swap i8!
+I 1+ M 48 ff c0 Y ;
 I for M 51 48 91 48 ad Y ip@ ;
 I next Y dup ip@ - 2 - M e2 Y i8 M 59 Y ;
 
-I str Y ;
-I and Y ;
-I shr Y ;
+I str Y data ptr @ lit dup len data w8 data cpy ; W todo, elf needs fixes
+I and M 48 93 G drop M 48 21 D8 Y ;
+I shr M 51 48 91 G drop M 48 D3 E8 59 Y ;
 
 
 W Runtime --------------------------------------------------------------------- 
-R emit G dup M 51 b8 01 00 00 00 bf 01 00 00 00 ba 01 00 00 00 0f 05 59 G drop drop G ;
-R space G $20 emit ; R cr G $0a emit ; R exit M bf 3c 00 00 00 48 97 0f 05 G ;
-R hexdigit G dup $a - -if $31 + ; then $41 + ;
-R .H G dup $f0 and 4 shr hexdigit emit $0f and hexdigit emit ;
+R init W r15<-8 M 41 bf Y 8 i32 W init stack M be Y stack-start i32 G main 0 exit
+R emit G dup M 51 b8 Y 1 i32 M bf Y 1 i32 M ba Y 1 i32 M 0f 05 59 G drop drop G ;
+R getc G dup M 51 B8 00 00 00 00 4C 29 FE 48 31 FF BA 01 00 00 00 0f 05 59 G ;
+R exit M bf 3c 00 00 00 48 97 0f 05 
+R puts M 56 51 8a 10 48 8d 70 01 bf 01 00 00 00 48 89 f8 0f 05 59 5e 48 ad G ;
+
 
 
 W User Program   --------------------------------------------------------------
-R chars W from num G for dup emit 1 + next ; 
-
-R main 
-R init W r15=8 M 41 bf 08 00 00 00 W init rsi stack top M be 00 90 12 00 
-G $30 10 chars W , G $41 26 chars cr 0 exit
-
+R cr G $0a emit ; R space G $20 emit ; R spaces G for space next G ;
+R hexdigit G dup $a - -if $30 + ; then 55 + ;
+R .hi G $f0 and 4 shr hexdigit emit ; R .lo G $0f and hexdigit emit ;
+R .H G dup .hi .lo ; R ?eol G dup $07 and !if cr .H 4 spaces ; then ;
+R main G 0 R loop G dup ?eol G getc if .H space 1+ loop ; then ;
 
 
