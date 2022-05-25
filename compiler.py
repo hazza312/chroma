@@ -18,7 +18,9 @@ class Compiler:
         self._sections = []
 
         self._magic_dst = 0
-        self._endian = "big"     
+        self._endian = "big"   
+        
+        self._unresolved = {"jmp": [], "call": []}
 
     def write_section(self, section, add):      
         size = len(add)
@@ -82,23 +84,13 @@ class Compiler:
             section = self._stack.pop()
             val = self._stack.pop()
             self._sections[section - 1][var] = val
-
-        elif word.val == "i!":
+            
+        elif word.val in ('i8!', 'i16!', 'i32!'):
+            bytes = int(word.val[1:-1]) // 8
             loc = self._stack.pop()
-            val = self._stack.pop().to_bytes(1, byteorder=self._endian, signed=True)[0]
-            self._sections[0]["buf"][loc - self._sections[0]["base"]] = val
-
-        elif word.val == "i16!":
-            loc = self._stack.pop()
-            val = self._stack.pop().to_bytes(2, byteorder=self._endian, signed=True)
+            val = self._stack.pop().to_bytes(bytes, byteorder=self._endian, signed=True)
             start = loc - self._sections[0]["base"]
-            self._sections[0]["buf"][start:start+2] = val
-
-        elif word.val == "i32!":
-            loc = self._stack.pop()
-            val = self._stack.pop().to_bytes(4, byteorder=self._endian, signed=True)
-            start = loc - self._sections[0]["base"]
-            self._sections[0]["buf"][start:start+4] = val
+            self._sections[0]["buf"][start:start+bytes] = val
 
         elif word.val in ("w8", "w16", "w32", "w64"):
             self.write_word(int(word.val[1:]) // 8, self._stack.pop())
@@ -161,16 +153,6 @@ class Compiler:
         if word.val in self._macros:
             self._compile(self._macros[word.val])
 
-        elif word.val in self._definitions:
-            self._stack.append(self._definitions[word.val])
-            if next.val == ';': # tail rec
-                op = self._macros["jmp"]
-                consume = 1
-            else:
-                op = self._macros["call"]
-
-            self._compile(op)
-
         elif word.val in self._variables:
             self.lit(self._variables[word.val])        
 
@@ -180,9 +162,24 @@ class Compiler:
         elif word.val[0] == '"' and word.val[-1] == '"':
             self._stack.append(word.val[1:-1])
             self._compile(self._macros["str"])
-
+            
         else:
-            raise ValueError(f"{word.val} is undefined")
+        	if next.val == ';':
+        		op = "jmp"
+        		consume = 1
+        	else:
+        		op = "call"
+        		consume = 0
+        
+        	if word.val not in self._definitions:
+        		target = 0
+        		self._unresolved[op].append((self._sections[0]["ptr"], word.val))
+        	
+        	else:
+        		target = self._definitions[word.val]
+        	
+        	self._stack.append(target)
+        	self._compile(self._macros[op])       
 
         return consume
 
@@ -227,6 +224,18 @@ class Compiler:
 
     def compile(self):
         self._compile(self._tokens)
+        end = self._sections[0]['ptr']
+        
+        for (op, unresolveds) in self._unresolved.items():
+             for (loc, target) in unresolveds:
+                if target not in self._definitions:
+                    raise ValueError(f"{op} to {target} remains unresolved")
+        		
+                self._sections[0]['ptr'] = loc
+                self._stack.append(self._definitions[target])
+                self._compile(self._macros[op])
+        
+        self._sections[0]['ptr'] = end
         self._compile(self._macros['compile'])
 
 
