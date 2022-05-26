@@ -82,6 +82,9 @@ class Compiler:
 
         elif word.val == "-":
             self._stack.append(-self._stack.pop() + self._stack.pop())
+            
+        elif word.val == "and":
+            self._stack.append(self._stack.pop() & self._stack.pop())
 
         elif word.val == "!":
             var = self._stack.pop()

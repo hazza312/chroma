@@ -1,17 +1,23 @@
 W x64/Linux/ELF ---------------------------------------------------------------
 Y 2 sections little endian I binary Y 0 I code Y 1 I data Y 2 ;
 
-W for now, just give everything a page. OS sorts return stack
+W Define virtual addresses and alignment for segments. OS sorts return stack
 I vma-load Y $10000 I data-start Y $11000 I stack-start Y $12000 I section-align Y $1000
 
-I size W section Y dup ptr @ swap base @ -
+W Misc useful definitions and constants for ELF 64-bit
+I b64 Y binary w64 Y ;
+I size W (section# -- size) Y dup ptr @ swap base @ -
 I elf-head-size Y $40 I phead-size Y $38
 
+W Caluclate offsets for code section
 I code-file-offset Y phead-size 2 * elf-head-size + 
 I code-load-start Y vma-load code-file-offset + ;
-I data-file-offset Y code-file-offset code size + 
-I b64 Y binary w64 Y ;
 
+W Padding to align data section in file to map to start of new page
+I padding-size Y $1000 $b0 code size + $fff and -
+I data-file-offset Y code-file-offset code size + padding-size + ;
+
+W Set the compiler origins for each segment
 Y code-load-start code base ! Y code-load-start code ptr !
 Y data-start data base ! Y data-start data ptr !
 
@@ -49,12 +55,15 @@ W Program header -- data
 M 01 00 00 00 W loadable segment
 M 06 00 00 00 W flags  (bit0=X, bit1=W, bit2=R)
 Y data-file-offset b64 W segment offset in file image
-Y data-start data-file-offset + b64 W VA of segment in memory
-Y data-start data-file-offset + b64 W physical address
+Y data-start b64 W VA of segment in memory
+Y data-start b64 W physical address
 Y data size b64 W size of segment bytes in file image
 Y stack-start data-start - b64 W size of segment bytes in memory
 Y section-align b64 W alignment
+
+W write-out the segments
 Y code write 
+Y padding-size padding
 Y data write Y ;
 
 
@@ -79,7 +88,7 @@ I 1+ M 48 ff c0 Y ;
 I for M 51 48 91 48 ad Y ip@ ;
 I next Y dup ip@ - 2 - M e2 Y i8 M 59 Y ;
 
-I str Y data ptr @ lit dup len data w8 data cpy ; W todo, elf needs fixes
+I str Y data ptr @ lit dup len data w8 data cpy
 I and M 48 93 G drop M 48 21 D8 Y ;
 I shr M 51 48 91 G drop M 48 D3 E8 59 Y ;
 
@@ -89,7 +98,8 @@ R init W r15<-8 M 41 bf Y 8 i32 W init stack M be Y stack-start i32 G main 0 exi
 R emit G dup M 51 b8 Y 1 i32 M bf Y 1 i32 M ba Y 1 i32 M 0f 05 59 G drop drop G ;
 R getc G dup M 51 B8 00 00 00 00 4C 29 FE 48 31 FF BA 01 00 00 00 0f 05 59 G ;
 R exit M bf 3c 00 00 00 48 97 0f 05 
-R puts M 56 51 8a 10 48 8d 70 01 bf 01 00 00 00 48 89 f8 0f 05 59 5e 48 ad G ;
+R cr G $0a emit ; 
+R puts M 56 51 8a 10 48 8d 70 01 bf 01 00 00 00 48 89 f8 0f 05 59 5e 48 ad G cr ;
 
 
 
@@ -98,6 +108,8 @@ R cr G $0a emit ; R space G $20 emit ; R spaces G for space next G ;
 R hexdigit G dup $a - -if $30 + ; then 55 + ;
 R .hi G $f0 and 4 shr hexdigit emit ; R .lo G $0f and hexdigit emit ;
 R .H G dup .hi .lo ; R ?eol G dup $07 and !if cr .H 4 spaces ; then ;
-R main G 0 R loop G dup ?eol G getc if .H space 1+ loop ; then ;
+R main G "helloworld" puts ;
+
+G 0 R loop G dup ?eol G getc if .H space 1+ loop ; then ;
 
 
