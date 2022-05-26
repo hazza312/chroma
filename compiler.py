@@ -138,7 +138,7 @@ class Compiler:
             self._f.write(section["buf"][:section["ptr"]])
 
         elif word.val == "padding":
-            self._f.write(bytes([0]) * self._stack.pop())
+            self._f.write(bytearray([0]) * self._stack.pop())
 
         elif word.val[0] == '"' and word.val[-1] == '"':
             self._stack.append(word.val[1:-1])
@@ -234,20 +234,25 @@ class Compiler:
              for (loc, target) in unresolveds:
                 if target not in self._definitions:
                     raise ValueError(f"{op} to {target} remains unresolved")
-        		
+
                 self._sections[0]['ptr'] = loc
                 self._stack.append(self._definitions[target])
                 self._compile(self._macros[op])
         
         self._sections[0]['ptr'] = end
         self._compile(self._macros['compile'])
+        
+        for name, addr in self._definitions.items():
+            print(f"{hex(addr):20}{name}")
 
 
 if __name__ == '__main__':
     import sys
+    from os.path import dirname, join
     base = sys.argv[1].rsplit(".", 1)[0]
+    ext = sys.argv[2]
     tokens = Lexer(open(sys.argv[1])).all
 
     Formatter(tokens).write(open(f"{base}.html", "w"))
-    Compiler(tokens, open(f"{base}.out", "wb"), False).compile()
+    Compiler(tokens, open(f"{base}.{ext}", "wb"), False).compile()
 

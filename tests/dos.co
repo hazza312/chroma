@@ -9,14 +9,14 @@ W memory I ! M 93 ad 89 07 ad I @ M 93 8b 07
 
 W Language implementation
 I -if G test jns Y ip@ 1 - G drop Y ; I if G test jz Y ip@  1 - ; 
-I then Y dup 1 + ip@ swap - swap  i! G drop Y ; 
+I then Y dup 1 + ip@ swap - swap  i8! G drop Y ; 
 I for M 51 91 G drop Y ip@ I next M e2 Y ip@ - 1 - i8 M 59 
 I call Y ip@ - 3 - M e8 Y i16 I jmp Y ip@ - 3 - M e9 Y i16 
 I str Y dp@ lit data cpy Y ;
 
 
 W i386/16/DOS COM Binary Format
-Y 2 sections I text Y 1 I data Y 2 ;
+Y 2 sections little endian I text Y 1 I data Y 2 ;
 Y $100 dup text base ! text ptr !
 Y $400 dup data base ! data ptr !
 
@@ -24,13 +24,12 @@ I i8 Y text w8 Y ; I i16 Y text w16 Y ;
 I ip Y text ptr I Y I ip@ Y ip @ I ip! Y text ptr ! ;
 I dp Y data ptr I Y I dp@ Y dp @ I dp! Y text ptr  ! ;
 
-I compile Y W store Y ip@ W touchup Y placeholder Y ip! G main ; W restore Y ip!
-W calculate padding Y data base @ ip@ - text base @ - 
+I compile W calculate padding Y data base @ ip@ - 
 W make binary Y text write padding data write ;
 
 
 W i386/16/DOS Runtime
-R init W setup data stack M be 00 e8 G R placeholder G Y 0 G jmp W to main defined later
+R init W setup data stack M be 00 e8 G main ;
 I int21h M cd 21 G drop Y ; 
 R emit M 92 b4 02 G int21h ; R space G $20 emit ; R cr G $d $a emit emit ;
 R puts M 92 b4 09 G int21h ; R hexchar G dup 10 - -if $30 + ; then $37 + ;
@@ -47,5 +46,3 @@ R test5 G 65 13 for 2 for dup emit 1+ next next cr
 R test6 G $FEDC P a G ! $7654 P c G ! $3210 P d G ! $BA98 P b G ! d c b a 4 for @ . next cr
 R test7 G "pizza$" puts cr 
 R test8 G "pizza$" P pizza G ! pizza @ puts cr ; 
-
-
