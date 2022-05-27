@@ -21,6 +21,9 @@ A couple sample apps working on both x86-16/DOS and x86-64/Linux targets
 ![some sample code](/sample/sample.png)
 ![some sample code](/sample/sample2.png)
 
+The colour printer app running on the DOS target, showing a listing of the source for the x86-64 target
+![some sample code](/sample/sample3.png)
+
 ## colorForth
 Colour is a core part of the language, it influences how words are to be interpreted and compiled. This is different to syntax highlighting in an editor which reflects the language, whereas here it add meaning. More about colorForth on [Wikipedia](https://en.wikipedia.org/wiki/ColorForth). 
 
