@@ -1,5 +1,7 @@
 #!/usr/bin/python3.9
 
+from os.path import dirname, join
+
 from lexer import Lexer
 from common import Colour, Token
 from formatter import Formatter
@@ -148,6 +150,12 @@ class Compiler:
         elif word.val == "padding":
             self._f.write(bytearray([0]) * self._stack.pop())
 
+        elif word.val == "include":
+            self.compile(join("lib", self._stack.pop() + ".co"))
+            
+        elif word.val == "magic!":
+            self._magic_dst = self._stack.pop() - 1
+
         elif word.val[0] == '"' and word.val[-1] == '"':
             self._stack.append(word.val[1:-1])
 
@@ -180,22 +188,22 @@ class Compiler:
             self._compile(self._macros["str"])
             
         else:
-        	if next.val == ';':
-        		op = "jmp"
-        		consume = 1
-        	else:
-        		op = "call"
-        		consume = 0
+            if next.val == ';':
+                op = "jmp"
+                consume = 1
+            else:
+                op = "call"
+                consume = 0
         
-        	if word.val not in self._definitions:
-        		target = 0
-        		self._unresolved[op].append((self._sections[0]["ptr"], word.val))
-        	
-        	else:
-        		target = self._definitions[word.val]
-        	
-        	self._stack.append(target)
-        	self._compile(self._macros[op])       
+            if word.val not in self._definitions:
+                target = 0
+                self._unresolved[op].append((self._sections[0]["ptr"], word.val))
+
+            else:
+                target = self._definitions[word.val]
+
+            self._stack.append(target)
+            self._compile(self._macros[op])       
 
         return consume
 
@@ -268,7 +276,6 @@ class Compiler:
 
 if __name__ == '__main__':
     import sys
-    from os.path import dirname, join
     
     arch, platform = sys.argv[1].split("/")
     source = sys.argv[2] 

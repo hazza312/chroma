@@ -1,0 +1,18 @@
+W basic command line colour code printer using ansi codes
+
+R space G $20 emit ; 
+I else G ; then Y ; 
+I esc G print getc drop drop Y ;
+I case G dup lit - !if Y ;
+
+R dochar    
+    Y $20 Y case G space Y else
+    Y $47 case G "[32;1m" Y esc else
+    Y $49 case G "[36;1m" Y esc else
+    Y $4d case G "[0m" Y esc else
+    Y $52 case G "[31;1m" Y esc else
+    Y $57 case G "[37;1m" Y esc else
+    Y $59 case G "[33;1m" Y esc else
+    W otherwise G emit ;
+            
+R main G getc if dochar main ; then drop "[0m" print ; 

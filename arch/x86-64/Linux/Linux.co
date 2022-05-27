@@ -65,4 +65,5 @@ Y code write
 Y padding-size padding
 Y data write Y ;
 
-
+I dp@ Y data ptr @ I dp! Y data ptr ! ;
+I alloc G dp@ lit Y dp@ + dp! Y ;

@@ -16,4 +16,4 @@ I !if G test jnz Y ip@  1 - ;
 I then Y dup 1 + ip@ swap - swap i8! Y ; 
 I for M 51 91 G drop Y ip@ I next M e2 Y ip@ - 1 - i8 M 59 
 I call Y ip@ - 3 - M e8 Y i16 I jmp Y ip@ - 3 - M e9 Y i16 
-I str Y dp@ lit data cpy Y ;
+I str Y data ptr @ lit dup len data w8 data cpy Y ; 
