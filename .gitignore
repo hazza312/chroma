@@ -1,5 +1,8 @@
 *.com
 *.COM
 *.class
+*.lst
+*.out
+*.html
 _misc/
 __pycache__/

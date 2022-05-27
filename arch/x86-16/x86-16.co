@@ -1,0 +1,19 @@
+W i386/16 Core 
+W stack I nip M 46 46 I drop M ad I dup M 4e 4e 89 04 
+W numeric I lit G dup M b8 Y i16 I + M 03 04 G nip I - M 93 ad 29 d8 I 1+ M 40 I 1- M 48    
+W logic I and M 23 04 G nip I or M 0b 04 G nip I xor M 33 04 G nip I rol M 51 91 ad d3 c0 59 
+W branch I jnz M 75 00  I jz M 74 00 I jns M 79 00  I js M 78 00  I test M 85 c0 G drop Y ;
+W flow I ; M c3  I hlt M F4 
+W memory I ! M 93 ad 89 07 ad I @ M 93 8b 07  
+I shr M 51 91 ad d3 e8 59 Y ;
+
+
+
+W Language implementation
+I -if G test jns Y ip@ 1 - ;
+I if G test jz Y ip@  1 - ; 
+I !if G test jnz Y ip@  1 - ; 
+I then Y dup 1 + ip@ swap - swap i8! Y ; 
+I for M 51 91 G drop Y ip@ I next M e2 Y ip@ - 1 - i8 M 59 
+I call Y ip@ - 3 - M e8 Y i16 I jmp Y ip@ - 3 - M e9 Y i16 
+I str Y dp@ lit data cpy Y ;

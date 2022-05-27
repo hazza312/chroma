@@ -1,0 +1,16 @@
+W Simple hexdump from streaming data on stdin
+
+W emit (ch --) outputs a character on stdout
+W getc (-- chr eof?) pushes character and eof indication 
+
+R cr W (--) G $0a emit ; 
+R space W (--) G $20 emit ;
+R spaces W (n --) G for space next G ;
+R hexdigit W (n -- n) G dup $a - -if $30 + ; then 55 + ;
+R lonibble W (n --) G $f and hexdigit emit ; 
+R hinibble W (n --) G 4 shr lonibble ; 
+R byte W (n --) G dup hinibble lonibble ; 
+R short W (n --) G dup 8 shr byte byte ;
+
+R ?eol W (n --) G dup $0f and !if G cr short 4 spaces ; then drop ;
+R main G 0 R loop G dup ?eol getc if byte space 1+ loop ; then drop cr ; 

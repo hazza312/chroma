@@ -1,10 +1,11 @@
+#!/usr/bin/python3.9
+
 from lexer import Lexer
 from common import Colour, Token
 from formatter import Formatter
 
 class Compiler:
-    def __init__(self, tokens, f, debug=False):
-        self._tokens = tokens
+    def __init__(self, f, debug=False):
         self._debug = debug
         self._depth = 0
 
@@ -19,6 +20,7 @@ class Compiler:
 
         self._magic_dst = 0
         self._endian = "big"   
+        self._ext = ""
         
         self._unresolved = {"jmp": [], "call": []}
 
@@ -73,6 +75,9 @@ class Compiler:
 
         elif word.val == "magic!":
             self._magic_dst = self._stack.pop() - 1
+            
+        elif word.val == "ext":
+            self._ext = self._stack.pop()
 
         elif word.val == "+":
             self._stack.append(self._stack.pop() + self._stack.pop())
@@ -150,7 +155,9 @@ class Compiler:
             self._stack.append(self._definitions[word.val])
 
         elif word.val in self._macros:
+            self._depth += 1
             self._compile(self._macros[word.val])
+            self._depth -= 1
 
         else:
             raise ValueError(f"unsupported #todo {word.val}")
@@ -158,7 +165,9 @@ class Compiler:
     def compiled_word(self, word, next): # green
         consume = 0
         if word.val in self._macros:
+            self._depth += 1
             self._compile(self._macros[word.val])
+            self._depth -= 1
 
         elif word.val in self._variables:
             self.lit(self._variables[word.val])        
@@ -209,7 +218,6 @@ class Compiler:
                 self._stack.append(curr.val)
                 self.write_word(1, self._magic_dst + 1)
 
-
             elif curr.colour == Colour.DEFINITION:
                 self._definitions[curr.val] = self._sections[0]["ptr"] # red
 
@@ -229,10 +237,18 @@ class Compiler:
 
             i += 1
 
-    def compile(self):
-        self._compile(self._tokens)
-        end = self._sections[0]['ptr']
+    def compile(self, f):
+        self._compile(Lexer(open(f)).all)
         
+    def make_listing(self, path):  
+        with open(path, "w") as f:
+            for name, addr in self._definitions.items():
+                f.write(f"{name:20}{hex(addr)}\n")
+        
+    def tape_out(self, output):
+        self._f = open(f"{output}.{self._ext}", "wb")
+        end = self._sections[0]['ptr']
+
         for (op, unresolveds) in self._unresolved.items():
              for (loc, target) in unresolveds:
                 if target not in self._definitions:
@@ -245,17 +261,25 @@ class Compiler:
         self._sections[0]['ptr'] = end
         self._compile(self._macros['compile'])
         
-        for name, addr in self._definitions.items():
-            print(f"{hex(addr):20}{name}")
+        self.make_listing(f"{output}.{self._ext}.lst")
+
+        
 
 
 if __name__ == '__main__':
     import sys
     from os.path import dirname, join
-    base = sys.argv[1].rsplit(".", 1)[0]
-    ext = sys.argv[2]
-    tokens = Lexer(open(sys.argv[1])).all
-
-    Formatter(tokens).write(open(f"{base}.html", "w"))
-    Compiler(tokens, open(f"{base}.{ext}", "wb"), False).compile()
-
+    
+    arch, platform = sys.argv[1].split("/")
+    source = sys.argv[2] 
+    base = source.rsplit(".", 1)[0]
+    
+    compiler = Compiler(False)
+    compiler.compile(join("arch", arch, platform, f"{platform}.co"))
+    compiler.compile(join("arch", arch, f"{arch}.co"))
+    
+    compiler.compile(join("lib", arch, platform, "base.co"))
+    compiler.compile(source) 
+    compiler.tape_out(base)
+    
+    Formatter(Lexer(open(source)).all).write(open(f"{base}.html", "w"))

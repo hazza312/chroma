@@ -1,0 +1,11 @@
+W DOS Binary Format
+Y 2 sections little endian "com" ext I text Y 1 I data Y 2 ;
+Y $100 dup text base ! text ptr !
+Y $400 dup data base ! data ptr !
+
+I i8 Y text w8 Y ; I i16 Y text w16 Y ;
+I ip Y text ptr I Y I ip@ Y ip @ I ip! Y text ptr ! ;
+I dp Y data ptr I Y I dp@ Y dp @ I dp! Y text ptr  ! ;
+
+I compile W calculate padding Y data base @ ip@ - 
+W make binary Y text write padding data write ;

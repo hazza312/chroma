@@ -1,0 +1,7 @@
+Y code magic!
+R init W r15<-8 M 41 bf Y 8 i32 W init stack M be Y stack-start i32 G main 0 exit
+R emit G dup M 51 b8 Y 1 i32 M bf Y 1 i32 M ba Y 1 i32 M 0f 05 59 G drop drop G ;
+R getc G dup M 51 B8 00 00 00 00 4C 29 FE 48 31 FF BA 01 00 00 00 0f 05 59 G ;
+R exit M bf 3c 00 00 00 48 97 0f 05 
+R cr G $0a emit ; 
+R puts M 56 51 8a 10 48 8d 70 01 bf 01 00 00 00 48 89 f8 0f 05 59 5e 48 ad G cr ;

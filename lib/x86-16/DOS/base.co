@@ -1,0 +1,7 @@
+W i386/16/DOS Runtime
+R init W setup data stack M be 00 e8 G main ;
+I int21h M cd 21 G drop Y ; 
+R emit M 92 b4 02 G int21h ; R space G $20 emit ; R cr G $d $a emit emit ;
+R getc M 51 4e 4e 89 04 4e 4e b4 3f 31 db b9 01 00 89 f2 cd 21 59 G ;
+R puts M 92 b4 09 G int21h ; R hexchar G dup 10 - -if $30 + ; then $37 + ;
+R . G 4 for G 4 rol dup $f and hexchar emit next G drop ;
