@@ -1,4 +1,4 @@
-from common import Colour, Token
+from .common import Colour, Token
 
 class Lexer:
     def __init__(self, io):
