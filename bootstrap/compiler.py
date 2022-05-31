@@ -2,12 +2,12 @@
 
 from os.path import dirname, join
 
-from lexer import Lexer
-from common import Colour, Token
-from formatter import Formatter
+from .lexer import Lexer
+from .common import Colour, Token
+from .formatter import Formatter
 
 class Compiler:
-    def __init__(self, f, debug=False):
+    def __init__(self, debug=False):
         self._debug = debug
         self._depth = 0
 
@@ -17,7 +17,7 @@ class Compiler:
 
         self._stack = []
 
-        self._f = f
+        self._f = None
         self._sections = []
 
         self._magic_dst = 0
@@ -212,7 +212,8 @@ class Compiler:
         self.write_section(self._sections[1], bytes([0, 0]))
         self.lit(self._variables[word.val])        
 
-    def _compile(self, tokens):
+    def _compile(self, f):
+        tokens = Lexer(open(f)).all if type(f) != list else f
         i = 0
 
         while i < len(tokens):
@@ -245,8 +246,13 @@ class Compiler:
 
             i += 1
 
-    def compile(self, f):
-        self._compile(Lexer(open(f)).all)
+    def compile(self, arch, platform, f):
+        base = f.rsplit(".", 1)[0]
+        self._compile(join("arch", arch, platform, f"{platform}.co"))
+        self._compile(join("arch", arch, f"{arch}.co"))
+        self._compile(join("lib", arch, platform, "base.co"))
+        self._compile(f) 
+        self.tape_out(base)
         
     def make_listing(self, path):  
         with open(path, "w") as f:
@@ -279,14 +285,7 @@ if __name__ == '__main__':
     
     arch, platform = sys.argv[1].split("/")
     source = sys.argv[2] 
-    base = source.rsplit(".", 1)[0]
     
-    compiler = Compiler(False)
-    compiler.compile(join("arch", arch, platform, f"{platform}.co"))
-    compiler.compile(join("arch", arch, f"{arch}.co"))
-    
-    compiler.compile(join("lib", arch, platform, "base.co"))
-    compiler.compile(source) 
-    compiler.tape_out(base)
+    Compiler(False).compile(source, arch, platform)
     
     Formatter(Lexer(open(source)).all).write(open(f"{base}.html", "w"))

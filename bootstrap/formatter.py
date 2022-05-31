@@ -1,4 +1,4 @@
-from common import Colour, Token
+from .common import Colour, Token
 from random import randint
 
 class Formatter:
