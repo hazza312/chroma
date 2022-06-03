@@ -209,8 +209,7 @@ class Compiler:
 
     def variable_define_word(self, word): # purple
         self._variables[word.val] = self._sections[1]["ptr"]   
-        self.write_section(self._sections[1], bytes([0, 0]))
-        self.lit(self._variables[word.val])        
+        self.write_section(self._sections[1], bytes([0, 0]))  
 
     def _compile(self, f):
         tokens = Lexer(open(f)).all if type(f) != list else f
@@ -286,6 +285,6 @@ if __name__ == '__main__':
     arch, platform = sys.argv[1].split("/")
     source = sys.argv[2] 
     
-    Compiler(False).compile(source, arch, platform)
+    Compiler(False).compile(arch, platform, source)
     
-    Formatter(Lexer(open(source)).all).write(open(f"{base}.html", "w"))
+    Formatter(Lexer(open(source)).all).write(open(f"{source}.html", "w"))
