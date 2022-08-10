@@ -14,6 +14,7 @@ class X8664Test(
     BasicArithmeticLogicOperations,
     ConditionalOperations,
     ForNext,
+    ARegisterTests,
     TestCase
 ):
     arch = "x86-64"

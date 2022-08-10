@@ -167,6 +167,11 @@ class Compiler:
             self._compile(self._macros[word.val])
             self._depth -= 1
 
+ 
+        elif word.val in self._variables:
+            self._stack.append(self._variables[word.val])
+
+
         else:
             raise ValueError(f"unsupported #todo {word.val}")
 
@@ -255,8 +260,15 @@ class Compiler:
         
     def make_listing(self, path):  
         with open(path, "w") as f:
+            f.write("Code labels\n")
+
             for name, addr in self._definitions.items():
                 f.write(f"{name:20}{hex(addr)}\n")
+
+            f.write("Data labels\n")
+            for name, addr in self._variables.items():
+                f.write(f"{name:20}{hex(addr)}\n")
+
         
     def tape_out(self, output):
         self._f = open(f"{output}.{self._ext}", "wb")

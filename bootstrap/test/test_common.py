@@ -99,4 +99,22 @@ class ForNext(ChromaTest):
         self.attempt("R main G $30 5 for dup emit 1+ next ;", "01234")
 
 
+class ARegisterTests(ChromaTest):
+    def test_simple_set_get(self):
+        self.attempt("R main G $30 a! a emit", "0")
+
+    def test_simple_increment(self):
+        self.attempt("R main G $30 a! +a a emit", "1")
+
+    def test_store_retrieve(self):
+        self.attempt("R main P char G char a! $30 !a @a emit", "0")
+
+    def test_store_increment_retrieve(self):
+        self.attempt("R main P buf G buf a! +a $30 !a buf a! +a @a emit", "0")
+
+    def test_increment_increment_word_retrieve(self):
+        store = "buf a! 8 for +a next $30 !a"
+        retrieve = "buf a! ++a @a"
+        self.attempt("R main P buf G " + store + " " + retrieve + " emit", "0")
+
     

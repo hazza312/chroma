@@ -21,3 +21,14 @@ I next Y dup ip@ - 2 - M e2 Y i8 M 59 Y ;
 I str Y data ptr @ lit dup len data w8 data cpy
 I and M 48 93 G drop M 48 21 D8 Y ;
 I shr M 51 48 91 G drop M 48 D3 E8 59 Y ;
+I @ M 48 93 48 8b 03 Y ;
+I ! M 48 89 c5 48 ad 48 89 45 00 48 ad Y ;
+I neg M 48 f7 d8 Y ;
+
+I a! M 49 96 48 ad Y ;
+I a M 4c 29 fe 48 89 06 4c 89 f0 Y ;
+I !a M 49 89 06 48 ad Y ;
+I @a M 4c 29 fe 48 89 06 49 8b 06 Y ;
+I +a M 49 ff c6 Y ;
+I ++a M 49 83 c6 08 Y ;
+
