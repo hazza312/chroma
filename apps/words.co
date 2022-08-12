@@ -1,0 +1,30 @@
+W Simple word dumper
+W -- show length, simple hash of input words separated by a single space
+W -- testing buffers, 'a' register operations, unicode names
+
+
+I allot W ( n -- ) Y data ptr @ + data ptr ! ;
+
+P wordbuf Y $100 allot
+
+R space W () G $20 emit ; R cr W () G $a emit ; 
+R hexdigit W (n -- n) G dup $a - -if $30 + ; then 55 + ;
+R nibble W (n --) G $f and hexdigit emit ; 
+R byte W (n --) G dup 4 shr nibble nibble ; R short W (n --) G dup 8 shr byte byte ; 
+R dword W (n --) G dup 16 shr short short ; R qword W (n --) G dup 32 shr dword dword ;
+
+R .word W (n --) G wordbuf a! for @a +a emit next ;
+R ws? W (ch -- b) G dup $20 - !if drop 1 ; then $a - !if 1 ; then 0 ;
+R 🗑️hash W (len -- hash) G wordbuf a! 0 swap for @a + dup + next ; 
+
+R word W (-- word_length) G wordbuf a! 0 
+W __ R loop G getc !if quit then 
+W __ G dup ws? !if !a +a 1+ loop ; then drop ; 
+
+R main G word 
+"length=" print dup byte space
+"hash=" print dup 🗑️hash qword space
+"word=" print .word cr 
+main R quit G ;
+
+
