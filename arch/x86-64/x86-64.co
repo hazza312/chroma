@@ -7,6 +7,7 @@ I lit G dup M b8 Y code w32
 I ; M c3
 I jmp Y code ptr @ - 5 - M e9 Y i32 ; 
 I call Y code ptr @ - 5 - M e8 Y i32 ;
+I go M 48 93 48 ad ff d3 Y ;
 I + M 48 93 G drop M 48 01 d8 
 I - M 48 93 G drop M 48 29 d8
 I test M 48 85 c0 G drop
