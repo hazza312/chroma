@@ -1,0 +1,15 @@
+W Linked list
+
+I allot W (n -- ) Y data ptr @ + data ptr ! ;
+P list-head Y 14 allot P here Y 14 allot P heap-start Y 14 allot
+
+R allocc W (size -- ^ptr) G  here @ swap here @ + here ! ;
+R @val W (^node -- val) G 8 + @ ; R !val W (val ^node --) G 8 + ! ;
+R new-node W (-- ^node) G 16 allocc ;
+R prepend W (^node --) G dup list-head @ swap ! list-head ! ;
+R prepend-new W (-- ^node) G new-node dup prepend ;
+
+R main 
+W __ G heap-start here ! 0 list-head ! 
+W __ R loop G getc if prepend-new !val loop ; then drop 
+W __ G list-head @ R loopp G dup @val emit @ dup if G loopp ; then ;
