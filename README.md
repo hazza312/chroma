@@ -6,6 +6,8 @@ A retargetable compiler heavily inspired by [colorForth](https://en.wikipedia.or
 |1981|16|x86-16|MSDOS| ✔️ |
 |2003|64|x86-64|Linux| ✔️  |
 
+An eventual goal is to make the compiler self-hosting (i.e. written in chroma/colorForth itself). Currently this is only true for the core word macros. For this experimental development phase, the compilation is supported by a Python bootstrap compiler.
+
 ## Demo Applications
 
 A couple sample apps working on both x86-16/DOS and x86-64/Linux targets
