@@ -55,7 +55,11 @@ class Compiler:
 
     def write_word(self, nbytes, section):
         val = self._stack.pop()
-        bytes = val.to_bytes(nbytes, byteorder=self._endian, signed=val < 0)
+        try:
+            bytes = val.to_bytes(nbytes, byteorder=self._endian, signed=val < 0)
+        except OverflowError:
+            print(val, val < 0)
+            raise 
 
         if section >= 1:
             self.write_section(self._sections[section -1 ], bytes)
@@ -92,6 +96,19 @@ class Compiler:
             
         elif word.val == "and":
             self._stack.append(self._stack.pop() & self._stack.pop())
+
+        elif word.val == "or":
+            self._stack.append(self._stack.pop() | self._stack.pop())
+
+        elif word.val == "shr":
+            shift = self._stack.pop()
+            num = self._stack.pop()
+            self._stack.append(num >> shift)
+
+        elif word.val == "shl":
+            shift = self._stack.pop()
+            num = self._stack.pop()
+            self._stack.append(num << shift)
 
         elif word.val == "!":
             var = self._stack.pop()
@@ -252,9 +269,10 @@ class Compiler:
 
     def compile(self, arch, platform, f):
         base = f.rsplit(".", 1)[0]
-        self._compile(join("arch", arch, platform, f"{platform}.co"))
-        self._compile(join("arch", arch, f"{arch}.co"))
-        self._compile(join("lib", arch, platform, "base.co"))
+        if arch != "raw":
+            self._compile(join("arch", arch, platform, f"{platform}.co"))
+            self._compile(join("arch", arch, f"{arch}.co"))
+            self._compile(join("lib", arch, platform, "base.co"))
         self._compile(f) 
         self.tape_out(base)
         
@@ -296,7 +314,7 @@ if __name__ == '__main__':
     
     arch, platform = sys.argv[1].split("/")
     source = sys.argv[2] 
-    
+
+    Formatter(Lexer(open(source)).all).write(open(f"{source}.html", "w"))    
     Compiler(False).compile(arch, platform, source)
-    
-    Formatter(Lexer(open(source)).all).write(open(f"{source}.html", "w"))
+
