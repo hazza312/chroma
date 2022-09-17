@@ -1,10 +1,13 @@
 # chroma
 A retargetable compiler heavily inspired by [colorForth](https://en.wikipedia.org/wiki/ColorForth). Work in progress! Development focusing on x86-64/Linux, with proof of concept support for other targets:
 
-|Date|Bits|Architecture|Platform|Proof of Concept|
-|-|-|-|-|-|
-|1981|16|x86-16|MSDOS| ✔️ |
-|2003|64|x86-64|Linux| ✔️  |
+|Bits|Architecture|Platform/Board|Proof of Concept|
+|-|-|-|-|
+|8/16*|AVR|Arduino|🚧|
+|16|x86-16|MSDOS|✔️|
+|64|x86-64|Linux|✔️|
+
+*natively 8-bit, 16-bit programming model
 
 An eventual goal is to make the compiler self-hosting (i.e. written in chroma/colorForth itself). Currently this is only true for the core word macros. For this experimental development phase, the compilation is supported by a Python bootstrap compiler.
 
