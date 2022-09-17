@@ -4,5 +4,8 @@
 *.lst
 *.out
 *.html
+*.bin
+*.elf
+*.pyc
 _misc/
 __pycache__/

@@ -16,6 +16,7 @@ I !if G test M 75 Y ip@ M 00
 I -if G test M 79 Y ip@ M 00
 I then Y dup 1 + ip@  swap - swap i8!
 I 1+ M 48 ff c0 Y ;
+I 1- M 48 ff c8 Y ;
 I for M 51 48 91 48 ad Y ip@ ;
 I next Y dup ip@ - 2 - M e2 Y i8 M 59 Y ;
 
