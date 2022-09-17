@@ -6,6 +6,19 @@ from .lexer import Lexer
 from .common import Colour, Token
 from .formatter import Formatter
 
+class UndefinedWordException(Exception):
+    def __init__(self, word_type, word, ref_type=None, branch_type=None, *args, **kwargs):
+        self.word_type = word_type
+        self.word = word
+        self.ref_type = ref_type
+        self.branch_type = branch_type
+        super(*args, **kwargs)
+    
+    def __str__(self):
+        return f"'{self.word}' is undefined "\
+                + f"({self.word_type}, {self.ref_type}, {self.branch_type})"
+
+
 class Compiler:
     def __init__(self, debug=False):
         self._debug = debug
@@ -55,11 +68,7 @@ class Compiler:
 
     def write_word(self, nbytes, section):
         val = self._stack.pop()
-        try:
-            bytes = val.to_bytes(nbytes, byteorder=self._endian, signed=val < 0)
-        except OverflowError:
-            print(val, val < 0)
-            raise 
+        bytes = val.to_bytes(nbytes, byteorder=self._endian, signed=val < 0)
 
         if section >= 1:
             self.write_section(self._sections[section -1 ], bytes)
@@ -183,14 +192,12 @@ class Compiler:
             self._depth += 1
             self._compile(self._macros[word.val])
             self._depth -= 1
-
  
         elif word.val in self._variables:
             self._stack.append(self._variables[word.val])
 
-
         else:
-            raise ValueError(f"unsupported #todo {word.val}")
+            raise UndefinedWordException("macro", word.val, "back")
 
     def compiled_word(self, word, next): # green
         consume = 0
@@ -295,7 +302,7 @@ class Compiler:
         for (op, unresolveds) in self._unresolved.items():
              for (loc, target) in unresolveds:
                 if target not in self._definitions:
-                    raise ValueError(f"{op} to {target} remains unresolved")
+                    raise UndefinedWordException("user",  target, "back", op)
 
                 self._sections[0]['ptr'] = loc
                 self._stack.append(self._definitions[target])
@@ -314,7 +321,6 @@ if __name__ == '__main__':
     
     arch, platform = sys.argv[1].split("/")
     source = sys.argv[2] 
-
+    
     Formatter(Lexer(open(source)).all).write(open(f"{source}.html", "w"))    
     Compiler(False).compile(arch, platform, source)
-

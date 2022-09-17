@@ -1,0 +1,10 @@
+W AVR Library init and routines ==================
+R init Y $00 Xlo ldi $01 Xhi ldi 
+W __ M 08 e0 0e bf 0f ef 0d bf W init stack
+W __ M 07 e6 10 e0 00 93 c4 00 W init serial
+W __ M 10 93 c5 00 08 e1 00 93
+W __ M c1 00 
+G main M 98 95 R hlt G hlt ;
+
+R emit M 90 91 c0 00 95 ff fc cf 80 93 c6 00 Y pop G ;
+

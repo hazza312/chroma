@@ -10,28 +10,38 @@ I dp Y data ptr I Y I dp@ Y dp @ I dp! Y text ptr  ! ;
 I compile W calculate padding Y data base @ ip@ - 
 W make binary Y text write padding data write ;
 
-
 W AVR Ops ==================
+Y text magic!
+
 W ToS is R16:R17, later make it R24:R25 (optimise immediate adds);
 W Xlo = R26, Xhi = R27
 I Xlo Y 26 ; 
 I Xhi Y 27 ;
+I Tlo Y 24 ;
+I Thi Y 25 ;
 
 I ldi W (val Rd[16..32] --) Y 
 16 - 4 shl $e000 or swap dup $00f0 and 4 shl swap $000f and or or i16 ;
 
-I push M 0d 93 1d 93 Y ;
-I pop M 1d 9d 0d 91 Y ;
-I popb M 3d 91 2d 91 Y ;
+I break M 98 95 Y ;
+I push M 8d 93 9d 93 Y ;
+I pop M 9e 91 8e 91 Y ;
+I popb M 7e 91 6e 91 Y ;
 
-I lit Y push dup Y $00ff and 16 ldi 8 shr 17 ldi ;
-I jmp Y ip@ - 1 shr $0fff and $C000 or i16 ;
-I call Y ip@ - 1 shr $0fff and $D000 or i16 ;
+I drop Y pop ;
+I dup Y push ; 
+I nip M 12 97 Y ;
+
+I lit Y push dup Y $00ff and 24 ldi 8 shr 25 ldi ;
+I jmp Y ip@ 2 + - 1 shr $0fff and $C000 or i16 ;
+I call Y ip@ 2 + - 1 shr $0fff and $D000 or i16 ;
 I ; M 08 95 Y ;
 
-I + Y popb M 02 0f 13 1f Y ;
-I - Y popb M 20 1b 31 0b 89 01 Y ;
+I 1+ M 01 96 Y ;
+I 1- M 01 97 Y ;
+I + Y popb M 86 0f 97 1f Y ;
 
-Y text magic!
-R init Y $00 dup Xlo ldi Xhi ldi 
-R main G $0304 $0304 - R here G 0 + here ; 
+I and Y popb M 86 23 97 23 Y ;
+I or Y popb M 86 2b 97 2b Y ;
+I xor Y popb M 86 2f 97 2f Y ;
+

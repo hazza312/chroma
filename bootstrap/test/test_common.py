@@ -5,7 +5,7 @@ from os.path import join
 from subprocess import run
 from time import sleep
 
-from ..compiler import Compiler
+from ..compiler import Compiler, UndefinedWordException
 
 
 class ChromaTest:
@@ -17,12 +17,26 @@ class ChromaTest:
         with open(src_path, "w") as f:
             f.write(source)
 
-        compiler = Compiler().compile(self.arch, self.platform, src_path)
-
-        assert expect == self.execute(exec_path) 
+        try:
+            compiler = Compiler().compile(self.arch, self.platform, src_path)
+            assert expect == self.execute(exec_path) 
+        except (UndefinedWordException) as e:
+            assert False, str(e) + " [" + open(src_path).read() + "]"
 
     def execute(self, binary) -> str:
         raise NotImplementedError("Override me")
+
+
+class SimpleEmit(ChromaTest):
+    """
+    See if platform has a working lit/emit implementation
+    """
+
+    def test_push_lit(self):
+        self.attempt("R main G $30 emit ;", "0")
+
+    def test_push_push_lit_lit(self):
+        self.attempt("R main G $30 $31 emit emit ;", "10")
 
 
 class BasicStackOperations(ChromaTest):
@@ -72,8 +86,8 @@ class BasicArithmeticLogicOperations(ChromaTest):
     def test_increment(self):
         self.attempt("R main G $30 1+ emit ;", "1")
 
-    #def test_decrement(self):
-     #   self.attempt("R main G $31 1- emit ;", "0")
+    def test_decrement(self):
+        self.attempt("R main G $31 1- emit ;", "0")
 
     def test_and(self):
         self.attempt("R main G $33 $31 and emit ;", "1")
