@@ -48,7 +48,6 @@ jobs:
     - name: Report report
       uses: dorny/test-reporter@v1
       with:
-        artifact: pytest-results          # artifact name
-        name: Tests                       # Name of the check run which will be created
-        path: '*.xml'                     # Path to test results (inside artifact .zip)
+        name: pytest-results                       # Name of the check run which will be created
+        path: 'junit/test-results.xml'    # Path to test results 
         reporter: jest-junit              # Format of test results
