@@ -133,7 +133,9 @@ class Compiler:
             self._sections[0]["buf"][start:start+bytes] = val
 
         elif word.val in ("w8", "w16", "w32", "w64"):
+            v = self._stack[-2]
             self.write_word(int(word.val[1:]) // 8, self._stack.pop())
+            print(hex(v), len(self._sections[1]), len(self._sections[1]['buf']))
 
         elif word.val == "@":
             var = self._stack.pop()
@@ -238,7 +240,7 @@ class Compiler:
 
     def variable_define_word(self, word): # purple
         self._variables[word.val] = self._sections[1]["ptr"]   
-        self.write_section(self._sections[1], bytes([0, 0]))  
+        #self.write_section(self._sections[1], bytes([0, 0]))  
 
     def _compile(self, f):
         tokens = Lexer(open(f)).all if type(f) != list else f
