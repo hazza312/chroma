@@ -1,6 +1,6 @@
 #!/usr/bin/python3.9
 
-from os.path import dirname, join
+from os.path import dirname, join, abspath, splitext
 
 from .lexer import Lexer
 from .common import Colour, Token
@@ -275,14 +275,14 @@ class Compiler:
             i += 1
 
     def compile(self, arch, platform, f):
-        base = f.rsplit(".", 1)[0]
+        base, _ = splitext(abspath(f))
         here = dirname(__file__)
         if arch != "raw":
             self._compile(join(here, "..", "arch", arch, platform, f"{platform}.co"))
             self._compile(join(here, "..", "arch", arch, f"{arch}.co"))
             self._compile(join(here, "..", "lib", arch, platform, "base.co"))
         self._compile(f) 
-        self.tape_out(join(here, base))
+        self.tape_out(base)
         
     def make_listing(self, path):  
         with open(path, "w") as f:
