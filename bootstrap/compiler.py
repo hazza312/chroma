@@ -276,12 +276,13 @@ class Compiler:
 
     def compile(self, arch, platform, f):
         base = f.rsplit(".", 1)[0]
+        here = dirname(__file__)
         if arch != "raw":
-            self._compile(join("arch", arch, platform, f"{platform}.co"))
-            self._compile(join("arch", arch, f"{arch}.co"))
-            self._compile(join("lib", arch, platform, "base.co"))
+            self._compile(join(here, "..", "arch", arch, platform, f"{platform}.co"))
+            self._compile(join(here, "..", "arch", arch, f"{arch}.co"))
+            self._compile(join(here, "..", "lib", arch, platform, "base.co"))
         self._compile(f) 
-        self.tape_out(base)
+        self.tape_out(join(here, base))
         
     def make_listing(self, path):  
         with open(path, "w") as f:
