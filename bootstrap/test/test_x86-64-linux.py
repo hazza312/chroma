@@ -12,6 +12,7 @@ from .test_common import *
 class X8664Test(
     BasicStackOperations, 
     BasicArithmeticLogicOperations,
+    DivisionOperations,
     ConditionalOperations,
     ForNext,
     ARegisterTests,

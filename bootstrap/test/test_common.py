@@ -93,6 +93,21 @@ class BasicArithmeticLogicOperations(ChromaTest):
         self.attempt("R main G $33 $31 and emit ;", "1")
 
 
+class DivisionOperations(ChromaTest):
+    """
+    Testing /mod, /, and mod
+    """
+
+    def test_divmod(self):
+        self.attempt("R main G 5 2 /mod $30 + emit $30 + emit ;", "21")
+
+    def test_div(self):
+        self.attempt("R main G 13 2 / $30 + emit ;", "6")
+
+    def test_mod(self):
+        self.attempt("R main G 11 10 mod $30 + emit", "1")
+
+
 class ConditionalOperations(ChromaTest):
     """
     Testing basic conditionals

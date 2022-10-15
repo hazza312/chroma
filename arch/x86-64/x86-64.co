@@ -10,6 +10,9 @@ I call Y code ptr @ - 5 - M e8 Y i32 ;
 I go M 48 93 48 ad ff d3 Y ;
 I + M 48 93 G drop M 48 01 d8 
 I - M 48 93 G drop M 48 29 d8
+I /mod M 48 31 d2 48 93 48 ad 48  f7 fb 4c 29 fe 48 89 16 Y ;
+I / Y /mod nip ;
+I mod Y /mod G swap drop Y ;
 I test M 48 85 c0 G drop
 I if G test M 74 Y ip@ M 00 
 I !if G test M 75 Y ip@ M 00
