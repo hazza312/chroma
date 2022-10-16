@@ -23,6 +23,10 @@ I 1- M 48 ff c8 Y ;
 I for M 51 48 91 48 ad Y ip@ ;
 I next Y dup ip@ - 2 - M e2 Y i8 M 59 Y ;
 
+I >r M 50 48 ad Y ;
+I r> M 4c 29 fe 48 89 06 58 Y ;
+I r@ M 4c 29 fe 48 89 06 48 8b  04 24 Y ;
+
 I str Y data ptr @ lit dup len data w8 data cpy
 I and M 48 93 G drop M 48 21 D8 Y ;
 I shr M 51 48 91 G drop M 48 D3 E8 59 Y ;
