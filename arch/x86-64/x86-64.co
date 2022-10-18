@@ -20,6 +20,9 @@ G dup M b8 Y code w32
 I ; W (--) Return from a function call.
 M c3 Y ;
 
+I brk W (--) Debug breakpoint.
+M cc Y ;
+
 I jmp W C(target --) Emit code to jump to target currently top of compile stack.
 W TODO optimise for different branch distances
 Y code ptr @ - 5 - M e9 Y i32 ; 
@@ -79,6 +82,9 @@ I r@ M 4c 29 fe 48 89 06 48 8b  04 24 Y ;
 
 R rot W (a b c -- b c a) Rotate top three elements on stack.
 G >r swap r> swap ;
+
+R -rot W (a b c -- c a b) Rotate top three elements in reverse direction.
+G swap >r swap r> ;
 
 R rdrop W drop top item of return stack.
 G r> drop ;
