@@ -1,0 +1,24 @@
+R . W  (n --) Print positive/negative number in base10.
+G dup !if drop $30 emit ; then dup -if neg $2d emit then +div ;
+W __ R .div G dup -if ; then $30 + emit .div ; 
+W __ R +div G 0 1- swap R loop G dup !if drop ; then 10 /mod loop .div ; 
+
+R .sign W (n --) Print the sign of a number where 0 is +.
+G -if $2d emit ; then $2b emit ;
+
+R .zf W (n width --) Print non-negative number with zero filled fixed width.
+G dup >r for 10 /mod next drop r> for $30 + emit next ;
+
+R .szf W (n width --) Print number with sign and zero filled fixed width.
+G swap dup .sign abs swap .zf ;
+
+R .hms W (s --) Print duration in seconds as hh:mm:ss
+G 3600 /mod 2 .zf 58 emit 60 /mod 2 .zf 58 emit 2 .zf ;
+
+R .size W (bytes --) Print nicely approx number of bytes. G
+dup 1024 - -if . "b" puts ; then 10 shr
+dup 1024 - -if . "Kb" print ; then 10 shr
+dup 1024 - -if . "Mb" print ; then 10 shr
+dup 1024 - -if . "Gb" print ; then 10 shr
+dup 1024 - -if . "Tb" print ; then 10 shr
+dup 1024 - -if . "Pb" print ; then drop "big" print ; 
