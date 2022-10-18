@@ -1,0 +1,12 @@
+R min W (n n -- n) Determine the minimum of two numbers.
+G 2dup - -if drop ; then nip ;
+
+R max W (n n -- n) Determine the maximum of two numbers.
+G 2dup - -if nip ; then drop ;
+
+R abs W (n -- n) Determine absolute value of a number.
+G dup -if 0 swap - then ; 
+
+R sign W (n -- 1/-1) Get the sign of a number where 0 is positive.
+G -if 0 1- ; then 1 ;
+
