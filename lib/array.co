@@ -1,0 +1,15 @@
+R array-find W (arr size key -- n) Find first index of key in unsorted array, else -1.
+G rot a! swap for dup @a - !if drop i ;; then ++a next drop 0 1- ;
+
+R array-count W (arr size key -- n) Count occurences of key in array.
+G rot a! 0 -rot swap for dup @a - !if swap 1+ swap then ++a next drop ;
+
+R array-each W (arr size f --) Apply f to each element of the array.
+G rot a! swap for dup @a swap go ++a next drop ;
+
+R array-all W (arr size f --) Return true if f is true for all elements.
+G rot a! swap for dup @a swap go !if drop false ;; then ++a next drop true ;
+
+R array-any W (arr size f --) Return true if f is true for any element.
+G rot a! swap for dup @a swap go if drop true ;; then ++a next drop false ;
+
