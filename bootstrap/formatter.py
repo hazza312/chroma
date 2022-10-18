@@ -1,4 +1,5 @@
 from .common import Colour, Token
+from .lexer import Lexer
 from random import randint
 
 class Formatter:
@@ -16,4 +17,10 @@ class Formatter:
                 val = hex(token.val)[2:].rjust(2, '0') if type(token.val) == int else token.val 
                 f.write(f'<span title="{token.colour.description}" style="color: {hex_colour}">{val}</span> ')
         f.write('</body></html>')
+
+
+if __name__ == '__main__':
+    import sys
+    source = sys.argv[1] 
+    Formatter(Lexer(open(source)).all).write(open(f"{source}.html", "w"))
 

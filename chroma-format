@@ -1,0 +1,2 @@
+#!/usr/bin/sh 
+PYTHONPATH=$(dirname $0) python3.9 -m bootstrap.formatter $1
