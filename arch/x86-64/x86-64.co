@@ -77,6 +77,18 @@ I >r M 50 48 ad Y ;
 I r> M 4c 29 fe 48 89 06 58 Y ;
 I r@ M 4c 29 fe 48 89 06 48 8b  04 24 Y ;
 
+R rot W (a b c -- b c a) Rotate top three elements on stack.
+G >r swap r> swap ;
+
+R rdrop W drop top item of return stack.
+G r> drop ;
+
+R i W (-- n) Push loop counter on stack.
+G M 4c 29 fe 48 89 0e Y ;
+
+I ;; W Leave a loop early.
+G rdrop ; Y ;
+
 I str Y data ptr @ lit dup len data w8 data cpy
 I and M 48 93 G drop M 48 21 D8 Y ;
 I shr M 51 48 91 G drop M 48 D3 E8 59 Y ;
