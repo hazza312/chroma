@@ -20,9 +20,13 @@ class UndefinedWordException(Exception):
 
 
 class Compiler:
-    def __init__(self, debug=False):
+    def __init__(self, arch, platform, debug=False):
+        self._arch = arch
+        self._platform = platform
         self._debug = debug
         self._depth = 0
+
+        self._here = dirname(__file__)
 
         self._macros = {}
         self._definitions = {}
@@ -177,7 +181,7 @@ class Compiler:
             self._f.write(bytearray([0]) * self._stack.pop())
 
         elif word.val == "include":
-            self.compile(join("lib", self._stack.pop() + ".co"))
+            self._compile(join(self._here, "..", "lib", self._stack.pop() + ".co"))
             
         elif word.val == "magic!":
             self._magic_dst = self._stack.pop() - 1
@@ -274,13 +278,14 @@ class Compiler:
 
             i += 1
 
-    def compile(self, arch, platform, f):
+    def compile(self, f):
         base, _ = splitext(abspath(f))
-        here = dirname(__file__)
         if arch != "raw":
-            self._compile(join(here, "..", "arch", arch, platform, f"{platform}.co"))
-            self._compile(join(here, "..", "arch", arch, f"{arch}.co"))
-            self._compile(join(here, "..", "lib", arch, platform, "base.co"))
+            self._compile(join(self._here, "..", "arch", self._arch, self._platform, f"{self._platform}.co"))
+            self._compile(join(self._here, "..", "arch", self._arch, f"{self._arch}.co"))
+            self._compile(join(self._here, "..", "lib", self._arch, self._platform, "base.co"))
+
+        self._compile(join(self._here, "..", "lib", "core.co"))
         self._compile(f) 
         self.tape_out(base)
         
@@ -324,4 +329,4 @@ if __name__ == '__main__':
     source = sys.argv[2] 
     
     Formatter(Lexer(open(source)).all).write(open(f"{source}.html", "w"))    
-    Compiler(False).compile(arch, platform, source)
+    Compiler(arch, platform, debug=False).compile(source)
