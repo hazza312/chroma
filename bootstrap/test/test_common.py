@@ -18,7 +18,7 @@ class ChromaTest:
             f.write(source)
 
         try:
-            compiler = Compiler().compile(self.arch, self.platform, src_path)
+            compiler = Compiler(self.arch, self.platform).compile(src_path)
             assert expect == self.execute(exec_path) 
         except (UndefinedWordException) as e:
             assert False, str(e) + " [" + open(src_path).read() + "]"
