@@ -1,0 +1,7 @@
+I true G 1 Y ;
+I false G 0 Y ;
+I , Y data w64 ;
+
+R abs W (n -- n) Determine absolute value of a number.
+G dup -if 0 swap - then ; 
+

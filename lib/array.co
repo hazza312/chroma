@@ -13,3 +13,5 @@ G rot a! swap for dup @a swap go !if drop false ;; then ++a next drop true ;
 R array-any W (arr size f --) Return true if f is true for any element.
 G rot a! swap for dup @a swap go if drop true ;; then ++a next drop false ;
 
+R array-same? W (arr1 arr2 size --) Return true if both arrays are equal.
+G ;
