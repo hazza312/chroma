@@ -285,7 +285,7 @@ class Compiler:
             self._compile(join(self._here, "..", "arch", self._arch, f"{self._arch}.co"))
             self._compile(join(self._here, "..", "lib", self._arch, self._platform, "base.co"))
 
-        self._compile(join(self._here, "..", "lib", "core.co"))
+            self._compile(join(self._here, "..", "lib", "core.co"))
         self._compile(f) 
         self.tape_out(base)
         
