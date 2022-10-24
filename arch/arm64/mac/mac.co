@@ -13,8 +13,8 @@ M cf fa ed fe W magic
 M 0c 00 00 01 W cputype: 0c (CPU_TYPE_ARM64) | 0x01000000 (CPU_ARCH_ABI64)
 M 00 00 00 00 W cpusubtype
 M 02 00 00 00 W filetype: MH_EXECUTE = demand paged executable file
-M 10 00 00 00 W ncmds, number of load commands
-M e8 02 00 00 W size of all load commands
+M 8 00 00 00 W ncmds, number of load commands
+M 98 01 00 00 W size of all load commands
 M 85 00 20 00 W flags MH_NOUNDEFS (0x1) | MH_DYLDLINK (0x4) | MH_TWOLEVEL (0x80) | MH_PIE (0x200000)
 M 00 00 00 00 W reserved
 
@@ -33,7 +33,7 @@ Y 0 b32 W flags
 
 W load command #2
 Y $19 b32 W LC_SEGMENT_64
-Y $e8 b32 W cmdsize
+Y $98 b32 W cmdsize
 M 5f 5f 54 45 58 54 00 00 00 00 00 00 00 00 00 00 W "__TEXT"
 Y $100000000 b64 W vmaddr
 Y $4000 b64 W vmsize
@@ -41,7 +41,7 @@ Y 0 b64 W fileoffset
 Y $4000 b64 W filesize, amount to map from file
 M 5 0 0 0 W maxprot read | execute
 M 5 0 0 0 W initprot read | execute
-Y 2 b32 W nsects
+Y 1 b32 W nsects
 Y 0 b32 W flags
 
 W section #1
@@ -54,20 +54,6 @@ Y 2 b32 W align, power of 2
 Y 0 b32 W file offset of relocation entries
 Y 0 b32 W number of relocation entries
 Y $80000400 b32 W flags 
-Y 0 b32 W reserved
-Y 0 b32 W reserved
-Y 0 b32 W reserved
-
-W section #2 (needed?)
-M 5f 5f 75 6e 77 69 6e 64 5f 69 6e 66 6f 00 00 00 W sect name "__unwind_info"
-M 5f 5f 54 45 58 54 00 00 00 00 00 00 00 00 00 00 W segname "__TEXT"
-Y $100003fb8 b64 W addr
-Y $48 b64 W size of section
-Y $3fb8 b32 W file offset
-Y 2 b32 W align, power of 2
-Y 0 b32 W file offset of relocation entries
-Y 0 b32 W number of relocation entries
-Y 0 b32 W flags 
 Y 0 b32 W reserved
 Y 0 b32 W reserved
 Y 0 b32 W reserved
@@ -95,37 +81,15 @@ W load command #5
 Y $80000033 b32 W LC_DYLD_EXPORTS_TRIE 
 Y $10 b32 W cmdsize
 Y $4038 b32 W dataoffset
-Y $30 b32 W datasize 
+Y $0 b32 W datasize 
 
 W load command #6
 Y 2 b32 W LC_SYMTAB
 Y $18 b32 W cmdsize
 Y $4070 b32 W symoff 
-Y 3 b32 W nsyms
+Y 0 b32 W nsyms
 Y $40a0 b32 W stroff
 Y $28 b32 W strsize 
-
-W load command #7
-Y $b b32 W LC_DYSYMTAB
-Y $50 b32 W cmdsize 
-Y 0 b32 W idx local syms
-Y 1 b32 W local syms 
-Y 1 b32 W idx ext def syms 
-Y 2 b32 W num ext def s 
-Y 3 b32 W idx undefined symbols
-Y 0 b32 W num undefined
-Y 0 b32 W ...
-Y 0 b32 W ...
-Y 0 b32 W ...
-Y 0 b32 W ...
-Y 0 b32 W ...
-Y 0 b32 W ...
-Y 0 b32 W ...
-Y 0 b32 W ...
-Y 0 b32 W ...
-Y 0 b32 W ...
-Y 0 b32 W ...
-Y 0 b32 W ...
 
 W load command #8 
 Y $e b32 W LC_LOAD_DYLINKER
@@ -133,40 +97,13 @@ Y $20 b32 W cmdsize
 Y $c b32 W strlen 
 M 2f 75 73 72 2f 6c 69 62 2f 64 79 6c 64 0 0 0 0 0 0 0  W "/usr/lib/dyld" + pad
 
-W load command #9
-Y $1b b32 W cmd LC_UUID
+W load command #12 
+Y $80000028 b32 W LC_MAIN
 Y $18 b32 W cmdsize 
-M cf 65 ce 90 f8 3f 30 e2 ae 22 e9 db c4 2 ab f4 W uuid 
+Y $3f88 b64 W entryoff 
+Y $0 b64 W stack size  
 
-W load command #10
-Y $32 b32 W LC_BUILD_VERSION
-Y $20 b32 W cmdsize 
-Y 1 b32 W platform 
-Y $c0000 b32 W min iOS
-Y $a1100 b32 W sdk
-Y 1 b32 W ntools 
-W tool#1
-Y 3 b32 W tool TOOL_LD
-Y $3330600 b32 W version
-M
-2a 0 0 0 10 0 0 0 
-0 0 0 0 0 0 0 0 
-28 0 0 80 18 0 0 0 
-88 3f 0 0 0 0 0 0 
-0 0 0 0 0 0 0 0 
-c 0 0 0 38 0 0 0 
-18 0 0 0 2 0 0 0 
-3 64 1f 5 0 0 1 0 
-2f 75 73 72 2f 6c 69 62 
-2f 6c 69 62 53 79 73 74 
-65 6d 2e 42 2e 64 79 6c 
-69 62 0 0 0 0 0 0 
-26 0 0 0 10 0 0 0 
-68 40 0 0 8 0 0 0 
-29 0 0 0 10 0 0 0 
-70 40 0 0 0 0 0 0 
-1d 0 0 0 10 0 0 0 
-d0 40 0 0 17 1 0 0 
+Y $150 padding W removed 
 Y $3c80 padding
 
 W _start 100003f88
@@ -178,10 +115,7 @@ M 1 10 0 d4 W svc	#0x80
 M 0 0 80 d2 W mov	x0, #0
 M 30 0 80 d2 W mov	x16, #1
 M 1 10 0 d4 W svc	#0x80
-
-W ?? M
-48 65 6c 6c 6f 20 57 6f 
-72 6c 64 21 a 0 0 0 
+M 48 65 6c 6c 6f 20 57 6f 72 6c 64 21 a 0 0 0 W "Hello World!"
 
 W __unwind_info 100003fb8
 M
