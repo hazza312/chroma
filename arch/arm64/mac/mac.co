@@ -1,25 +1,77 @@
 Y 2 sections I code Y 1 I data Y 2 ;
 Y "out" ext
 Y little endian
+I size W (section# -- size) Y dup ptr @ swap base @ - ;
+I b64 Y 0 w64 ;
+I b32 Y 0 w32 ;
+I i32 Y 1 w32 ;
+
+
+W Implementation notes:
+r28 data sp
+r27 tos
 
 Y code magic!
-R init
-M 20 0 80 d2 W mov	x0, #1 
-M e1 0 0 10 W adr	x1, #28
-M a2 1 80 d2 W mov	x2, #13
-M 90 0 80 d2 W mov	x16, #4
-M 1 10 0 d4 W svc	#0x80
-M 0 0 80 d2 W mov	x0, #0
-M 30 0 80 d2 W mov	x16, #1
-M 1 10 0 d4 W svc	#0x80
+
+W compiler
+
+I brk 
+M 00 00 20 d4 W 	brk	#0 Y ;
+
+W stack manipulators
+I dup W (a -- a a) Duplicate top element on stack
+M 9b 8f 1f f8  	W str x27, [x28, #-8]! Y ;
+
+I drop W (a -- ) Drop top element on stack
+M 9b 87 40 f8  	W ldr x27, [x28], #8 Y ;
+
+I nip W (a b -- b) Drop second on stack
+M 9a 87 40 f8 W ldr x26, [x28], #8 Y ;
+
+I swap W (a b -- b a) Swap top two elements on stack
+M 9a 03 40 f9  	W ldr	x26, [x28]
+M 9b eb 3f a9  	W stp	x27, x26, [x28, #-8]
+M fb 03 1a aa  	W mov	x27, x26 Y ;
+
+I lit W (-- n) (n --) Push a literal to runtime stack 
+#TODO currently only 16-bit immediates
+G dup Y 5 shl $d280001b or i32 ; W see C6-1705
+
+I jmp W (--) (dst --) Compile a branch to dst.
+Y code ptr @ - 2 shr $3ffffff and $14000000 or i32 ; W C6-1214
+
+I call W (--) (dst --) Compile a call to dst.
+Y code ptr @ - 2 shr $3ffffff and $94000000 or i32 ; W C6-1229
+
+R init W (--) Initialisation sequence for platform
+	W setup stack ptr
+    M 1c 80 03 10  	W adr	x28, #28672
+	G 97 98 swap swap
+	
+G emit
+
+R emit W (ch --) Output a single character to stdout.
+	M 9b 83 1f f8  W 	stur x27, [x28, #-8]
+    M 20 00 80 d2  W	mov	x0, #1; stdout
+	M 81 23 00 d1  W	sub	x1, x28, #8
+    M 22 00 80 d2  W 	mov	x2, #1; 1 character
+    M 90 00 80 d2  W	mov	x16, #4; 4=write syscall
+    M 01 10 00 d4  W	svc	#0x80
+	M 9b 87 40 f8  W 	ldr	x27, [x28], #8
+
+G 97 emit ;
+
+R exit W (n --) Exit gracefully to operating system with exit code.
+    M 80 8f 5f f8  W	ldr	x0, [x28, #-8]!
+    M 30 00 80 d2  W	W mov	x16, #1
+    M 01 10 00 d4  W 	W svc	#0x80
+R end
 
 Y data magic!
 M 48 65 6c 6c 6f 20 57 6f 72 6c 64 21 a 0 0 0 W "Hello World!"
 
 
 Y 0 magic!
-I b64 Y 0 w64 ;
-I b32 Y 0 w32 ;
 I compile 
 M
 W see mach-o/loader.h
@@ -28,12 +80,12 @@ M cf fa ed fe W magic
 M 0c 00 00 01 W cputype: 0c (CPU_TYPE_ARM64) | 0x01000000 (CPU_ARCH_ABI64)
 M 00 00 00 00 W cpusubtype
 M 02 00 00 00 W filetype: MH_EXECUTE = demand paged executable file
-M 6 00 00 00 W ncmds, number of load commands
-M 70 01 00 00 W size of all load commands
+M 7 00 00 00 W ncmds, number of load commands
+M 08 02 00 00 W size of all load commands
 M 85 00 20 00 W flags MH_NOUNDEFS (0x1) | MH_DYLDLINK (0x4) | MH_TWOLEVEL (0x80) | MH_PIE (0x200000)
 M 00 00 00 00 W reserved
 
-W load command #1
+W load command #1 (__PAGEZERO)
 Y $19 b32 W cmd 0x19 = LC_SEGMENT_64, 64-bit segment of this file to be mapped 
 Y $48 b32 W cmdsize (bytes) 
 M 5f 5f 50 41 47 45 5a 45 52 4f 00 00 00 00 00 00 W segment name "__PAGEZERO"
@@ -46,25 +98,25 @@ Y 0 b32 W initprot
 Y 0 b32 W nsects, number sections in segment
 Y 0 b32 W flags
 
-W load command #2
+W load command #2 (__TEXT)
 Y $19 b32 W LC_SEGMENT_64
 Y $98 b32 W cmdsize
 M 5f 5f 54 45 58 54 00 00 00 00 00 00 00 00 00 00 W "__TEXT"
 Y $100000000 b64 W vmaddr
 Y $4000 b64 W vmsize
 Y 0 b64 W fileoffset
-Y $4000 b64 W filesize, amount to map from file
+Y code size b64 W filesize, amount to map from file
 M 5 0 0 0 W maxprot read | execute
 M 5 0 0 0 W initprot read | execute
 Y 1 b32 W nsects
 Y 0 b32 W flags
 
-W section #1
+W section #2.1
 M 5f 5f 74 65 78 74 00 00 00 00 00 00 00 00 00 00 W sect name "__text"
 M 5f 5f 54 45 58 54 00 00 00 00 00 00 00 00 00 00 W segname "__TEXT"
-Y $100003f80 b64 W addr, memory address of section
-Y $2d b64 W size in bytes of section
-Y $3f80 b32 W file offset
+Y $100000000 b64 W addr, memory address of section
+Y $1000 b64 W size in bytes of section
+Y $1000 b32 W file offset
 Y 2 b32 W align, power of 2
 Y 0 b32 W file offset of relocation entries
 Y 0 b32 W number of relocation entries
@@ -73,11 +125,38 @@ Y 0 b32 W reserved
 Y 0 b32 W reserved
 Y 0 b32 W reserved
 
-W load command #3
+W load command #3 (__DATA)
+Y $19 b32 W LC_SEGMENT_64
+Y $98 b32 W cmdsize
+M 5f 5f 44 41 54 41 00 00 00 00 00 00 00 00 00 00 W "__DATA"
+Y $100004000 b64 W vmaddr
+Y $4000 b64 W vmsize
+Y $4000 b64 W fileoffset
+Y data size b64 W filesize, amount to map from file
+M 3 0 0 0 W maxprot read | write
+M 3 0 0 0 W initprot read | write
+Y 1 b32 W nsects
+Y 0 b32 W flags
+
+W section #3.1
+M 5f 5f 64 61 74 61 00 00 00 00 00 00 00 00 00 00 W sect name "__data"
+M 5f 5f 44 41 54 41 00 00 00 00 00 00 00 00 00 00 W segname "__DATA"
+Y $100004000 b64 W addr, memory address of section
+Y $4000 b64 W size in bytes of section
+Y $0 b32 W file offset
+Y 2 b32 W align, power of 2
+Y 0 b32 W file offset of relocation entries
+Y 0 b32 W number of relocation entries
+Y $0 b32 W flags 
+Y 0 b32 W reserved
+Y 0 b32 W reserved
+Y 0 b32 W reserved
+
+W load command #4 (__LINKEDIT)
 Y $19 b32 W LC_SEGMENT_64
 M 48 0 0 0 
 5f 5f 4c 49 4e 4b 45 44 49 54 00 00 00 00 00 00 W "__LINKEDIT" 
-Y $100004000 b64 W vmaddr 
+Y $100008000 b64 W vmaddr 
 Y $4000 b64 W vmsize 
 Y $4000 b64 W fileoffset 
 Y $18 b64 W filesize
@@ -86,32 +165,35 @@ Y 1 b32 W initprot
 Y 0 b32 W nsects 
 Y 0 b32 W flags
 
-W load command #4
+W load command #5
 Y $80000034 b32 W LC_DYLD_CHAINED_FIXUPS see loader.h
 Y $10 b32 W cmdsize
 Y $4000 b32 W dataoffset
 Y $0 b32 W datasize
 
-W load command #8 
+W load command #6 
 Y $e b32 W LC_LOAD_DYLINKER
 Y $20 b32 W cmdsize 
 Y $c b32 W strlen 
 M 2f 75 73 72 2f 6c 69 62 2f 64 79 6c 64 0 0 0 0 0 0 0  W "/usr/lib/dyld" + pad
 
-W load command #12 
+W load command #7 
 Y $80000028 b32 W LC_MAIN
 Y $18 b32 W cmdsize 
-Y $3f80 b64 W entryoff 
+Y $1000 b64 W entryoff 
 Y $0 b64 W stack size  
 
-Y $3df0 padding
+Y $1000 $228 - padding
 
-W _start 100003f88 -> 100000190
+W $1000
 Y code write
+
+Y $1000 code size - padding 
+
+W $4000
 Y data write
 
-
-Y 80 padding
+Y $2000 data size - padding
 
 W __LINKEDIT (0x4000 offset)
 Y $10 padding M 0 0 0 0 1 0 0 0 Y ;
