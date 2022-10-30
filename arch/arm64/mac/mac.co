@@ -53,7 +53,7 @@ W section #2.1
 M 5f 5f 74 65 78 74 00 00 00 00 00 00 00 00 00 00 W sect name "__text"
 M 5f 5f 54 45 58 54 00 00 00 00 00 00 00 00 00 00 W segname "__TEXT"
 Y $100000000 b64 W addr, memory address of section
-Y $1000 b64 W size in bytes of section
+Y $4000 b64 W size in bytes of section
 Y $1000 b32 W file offset
 Y 2 b32 W align, power of 2
 Y 0 b32 W file offset of relocation entries
@@ -81,7 +81,7 @@ M 5f 5f 64 61 74 61 00 00 00 00 00 00 00 00 00 00 W sect name "__data"
 M 5f 5f 44 41 54 41 00 00 00 00 00 00 00 00 00 00 W segname "__DATA"
 Y $100004000 b64 W addr, memory address of section
 Y $4000 b64 W size in bytes of section
-Y $0 b32 W file offset
+Y $4000 b32 W file offset
 Y 2 b32 W align, power of 2
 Y 0 b32 W file offset of relocation entries
 Y 0 b32 W number of relocation entries
@@ -96,7 +96,7 @@ M 48 0 0 0
 5f 5f 4c 49 4e 4b 45 44 49 54 00 00 00 00 00 00 W "__LINKEDIT" 
 Y $100008000 b64 W vmaddr 
 Y $4000 b64 W vmsize 
-Y $4000 b64 W fileoffset 
+Y $8000 b64 W fileoffset 
 Y $18 b64 W filesize
 Y 1 b32 W maxprot 
 Y 1 b32 W initprot 
@@ -106,7 +106,7 @@ Y 0 b32 W flags
 W load command #5
 Y $80000034 b32 W LC_DYLD_CHAINED_FIXUPS see loader.h
 Y $10 b32 W cmdsize
-Y $4000 b32 W dataoffset
+Y $8000 b32 W dataoffset
 Y $0 b32 W datasize
 
 W load command #6 
@@ -125,13 +125,11 @@ Y $1000 $228 - padding
 
 W $1000
 Y code write
-
-Y $1000 code size - padding 
+Y $3000 code size - padding 
 
 W $4000
 Y data write
+Y $4000 data size - padding
 
-Y $2000 data size - padding
-
-W __LINKEDIT (0x4000 offset)
+W __LINKEDIT (0x8000 offset)
 Y $10 padding M 0 0 0 0 1 0 0 0 Y ;

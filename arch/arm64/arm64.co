@@ -21,9 +21,6 @@ I dup W (a -- a a) Duplicate top element on stack
 I drop W (a -- ) Drop top element on stack
     M 9b 87 40 f8   W ldr   x27, [x28], #8 Y ;
 
-I drop W (a -- ) Drop top element on stack
-    M 9b 87 40 f8   W ldr   x27, [x28], #8 Y ;
-    
 I scratch W (--) Move tos into scratch register (internal use).
     M fa 03 1b aa   W mov   x26, x27
 
@@ -31,18 +28,20 @@ I nip W (a b -- b) Drop second on stack (into scratch register)
     M 9a 87 40 f8   W ldr   x26, [x28], #8 Y ;
 
 I swap W (a b -- b a) Swap top two elements on stack
-    M 9a 03 40 f9   W ldr   x26, [x28]
-    M 9b eb 3f a9   W stp   x27, x26, [x28, #-8]
-    M fb 03 1a aa   W mov   x27, x26 Y ;
+    M 9a 87 40 f8   W ldr   x26, [x28], #8
+    M 9b 8f 1f f8  	W str   x27, [x28, #-8]!
+    M fb 03 1a aa  	W mov   x27, x26 Y ;
 
 I lit W (-- n) (n --) Push a literal to runtime stack 
     #TODO currently only 16-bit immediates
     G dup Y 5 shl $d280001b or i32 ; W see C6-1705
 
-I alit W (-- n) (n --) Push a literal address to runtime stack.
+I alit W (-- n) (n --) Push a (data) address literal to runtime stack.
     G dup
-    Y ip@ - dup 29 shl $3 and swap $3fffc and .S 5 shl .S or $1000001b or i32 ; W C6-1189
+    Y ip@ - dup $3 and 29 shl swap $3fffc and 3 shl or $1000001b or i32 ; W C6-1189
 
+I str W (-- addr) (n --) 
+    Y data ptr @ alit dup len data w8 data cpy ;
 
 I 1+ W (n -- n) Increment tos.
     M 7b 07 00 91   W add   x27, x27, #1 Y ;
@@ -120,14 +119,24 @@ I next W (--) (addr --) Mark end of counted iteration loop.
     Y ip@ - 2 shr 5 shl $ffffe0 and $b5000018 or i32  
     M f8 07 41 f8   W ldr   x24, [sp], #16 Y ;
     
+I @ W (addr -- val) Fetch a value at tos address.
+    M 7b 03 40 f9   W ldr   x27, [x27] Y ;
+    
+I c@ W (addr -- val) Fetch a byte at tos address.
+    M 7b 03 40 39   W ldrb  w27, [x27] ;
+    
+I ! W (addr -- val) Fetch a value at tos address.
+    M 7a 03 00 f9   W str   x26, [x27]
+    G drop Y ;
+    
 I a! W (addr --) Store an address in the a register.
     M f7 03 1b aa   W mov   x23, x27
-    G nip Y ;
+    G drop Y ;
 
 I +a W (--) Increment a register.
     M f7 06 00 91   W add   x23, x23, #1 Y ;
     
-I ++a W (--) Increment a register by cell size
+I ++a W (--) Increment a register by cell size.
     M f7 22 00 91   W add   x23, x23, #8 Y ;
     
 I a W (-- a) Retrieve a register.
