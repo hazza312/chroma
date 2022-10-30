@@ -33,6 +33,7 @@ class Compiler:
         self._variables = {}
 
         self._stack = []
+        self._rstack = []
 
         self._f = None
         self._sections = []
@@ -40,6 +41,8 @@ class Compiler:
         self._magic_dst = 0
         self._endian = "big"   
         self._ext = ""
+        
+        self._last_green = None
         
         self._unresolved = {"jmp": [], "call": []}
 
@@ -69,21 +72,25 @@ class Compiler:
     def lit(self, x):
         self._stack.append(x)
         self._compile(self._macros["lit"])
+        
+    def alit(self, x):
+        self._stack.append(x)
+        self._compile(self._macros["alit"])
 
     def write_word(self, nbytes, section):
         val = self._stack.pop()
         bytes = val.to_bytes(nbytes, byteorder=self._endian, signed=val < 0)
-
+        
         if section >= 1:
             self.write_section(self._sections[section -1 ], bytes)
         else:
             self._f.write(bytes)
         
-    def macro_call_word(self, word): # yellow
-        if type(word.val) == int:
-            self._stack.append(word.val)
+    def macro_call_word(self, word): # yellow   
+        if type(word) == int:
+            self._stack.append(word)
 
-        elif word.val == "sections":
+        elif word == "sections":
             self._sections = [
                 {
                     "base": 0,
@@ -92,116 +99,123 @@ class Compiler:
                 } for _ in range(self._stack.pop())
             ]
 
-        elif word.val == "magic!":
+        elif word == "magic!":
             self._magic_dst = self._stack.pop() - 1
             
-        elif word.val == "ext":
+        elif word == "ext":
             self._ext = self._stack.pop()
 
-        elif word.val == "+":
+        elif word == "+":
             self._stack.append(self._stack.pop() + self._stack.pop())
 
-        elif word.val == "*":
+        elif word == "*":
             self._stack.append(self._stack.pop() * self._stack.pop())
 
-        elif word.val == "-":
+        elif word == "-":
             self._stack.append(-self._stack.pop() + self._stack.pop())
             
-        elif word.val == "and":
+        elif word == "and":
             self._stack.append(self._stack.pop() & self._stack.pop())
 
-        elif word.val == "or":
+        elif word == "or":
             self._stack.append(self._stack.pop() | self._stack.pop())
 
-        elif word.val == "shr":
+        elif word == "shr":
             shift = self._stack.pop()
             num = self._stack.pop()
             self._stack.append(num >> shift)
 
-        elif word.val == "shl":
+        elif word == "shl":
             shift = self._stack.pop()
             num = self._stack.pop()
             self._stack.append(num << shift)
 
-        elif word.val == "!":
+        elif word == "!":
             var = self._stack.pop()
             section = self._stack.pop()
             val = self._stack.pop()
             self._sections[section - 1][var] = val
             
-        elif word.val in ('i8!', 'i16!', 'i32!'):
-            bytes = int(word.val[1:-1]) // 8
+        elif word in ('i8!', 'i16!', 'i32!'):
+            bytes = int(word[1:-1]) // 8
             loc = self._stack.pop()
-            val = self._stack.pop().to_bytes(bytes, byteorder=self._endian, signed=True)
+            val = self._stack.pop()
+            val = val.to_bytes(bytes, byteorder=self._endian, signed=val < 0)
             start = loc - self._sections[0]["base"]
             self._sections[0]["buf"][start:start+bytes] = val
 
-        elif word.val in ("w8", "w16", "w32", "w64"):
-            self.write_word(int(word.val[1:]) // 8, self._stack.pop())
+        elif word in ("w8", "w16", "w32", "w64"):
+            self.write_word(int(word[1:]) // 8, self._stack.pop())
 
-        elif word.val == "@":
+        elif word == "@":
             var = self._stack.pop()
             section = self._stack.pop() - 1
             self._stack.append( self._sections[section][var] )
 
-        elif word.val == "drop":
+        elif word == "drop":
             self._stack.pop()
 
-        elif word.val == "dup":
+        elif word == "dup":
             self._stack.append(self._stack[-1])
 
-        elif word.val == "len":
+        elif word == "len":
             self._stack.append(len(self._stack.pop()))
 
-        elif word.val == ".S":
+        elif word == ".S":
             print("magic=", self._magic_dst, self._stack)
 
-        elif word.val == "cpy":
+        elif word == "cpy":
             dst = self._stack.pop()
             string = self._stack.pop()
             self.write_section(self._sections[dst - 1], string.encode())
 
-        elif word.val == "swap":
+        elif word == "swap":
             self._stack[-1], self._stack[-2] = self._stack[-2], self._stack[-1]
 
-        elif word.val == "section":
+        elif word == "section":
             self._stack.append(self._sections[self._stack.pop() - 1])
 
-        elif word.val in ("base", "ptr", "buf", "little", "big"):
-            self._stack.append(word.val)
+        elif word in ("base", "ptr", "buf", "little", "big"):
+            self._stack.append(word)
 
-        elif word.val == "endian":
+        elif word == "endian":
             self._endian = self._stack.pop()
 
-        elif word.val == "write": 
+        elif word == "write": 
             section = self._sections[self._stack.pop() - 1]
             self._f.write(section["buf"][:section["ptr"]])
 
-        elif word.val == "padding":
+        elif word == "padding":
             self._f.write(bytearray([0]) * self._stack.pop())
 
-        elif word.val == "include":
+        elif word == "include":
             self._compile(join(self._here, "..", "lib", self._stack.pop() + ".co"))
             
-        elif word.val == "magic!":
+        elif word == "magic!":
             self._magic_dst = self._stack.pop() - 1
+            
+        elif word == ">r":
+            self._rstack.append(self._stack.pop())
+        
+        elif word == "r>":
+            self._stack.append(self._rstack.pop())
 
-        elif word.val[0] == '"' and word.val[-1] == '"':
-            self._stack.append(word.val[1:-1])
+        elif word[0] == '"' and word[-1] == '"':
+            self._stack.append(word[1:-1])
 
-        elif word.val in self._definitions:
-            self._stack.append(self._definitions[word.val])
+        elif word in self._definitions:
+            self._stack.append(self._definitions[word])
 
-        elif word.val in self._macros:
+        elif word in self._macros:
             self._depth += 1
-            self._compile(self._macros[word.val])
+            self._compile(self._macros[word])
             self._depth -= 1
  
-        elif word.val in self._variables:
-            self._stack.append(self._variables[word.val])
+        elif word in self._variables:
+            self._stack.append(self._variables[word])
 
         else:
-            raise UndefinedWordException("macro", word.val, "back")
+            raise UndefinedWordException("macro", word, "back")
 
     def compiled_word(self, word, next): # green
         consume = 0
@@ -211,7 +225,8 @@ class Compiler:
             self._depth -= 1
 
         elif word.val in self._variables:
-            self.lit(self._variables[word.val])        
+            cmd = self.alit if 'alit' in self._macros else self.lit
+            cmd(self._variables[word.val])        
 
         elif type(word.val) == int:
             self.lit(word.val)
@@ -242,7 +257,6 @@ class Compiler:
 
     def variable_define_word(self, word): # purple
         self._variables[word.val] = self._sections[1]["ptr"]   
-        #self.write_section(self._sections[1], bytes([0, 0]))  
 
     def _compile(self, f):
         tokens = Lexer(open(f)).all if type(f) != list else f
@@ -267,11 +281,12 @@ class Compiler:
 
             elif curr.colour == Colour.EXECUTE:
                 self._depth += 1
-                self.macro_call_word(curr) # yellow
+                self.macro_call_word(curr.val) # yellow
                 self._depth -= 1
 
             elif curr.colour == Colour.COMPILE:
                 i += self.compiled_word(curr, next) # green
+                self._last_green = tokens[i].val
 
             elif curr.colour == Colour.VARIABLE:
                 self.variable_define_word(curr)
@@ -281,11 +296,10 @@ class Compiler:
     def compile(self, f):
         base, _ = splitext(abspath(f))
         if self._arch != "raw":
-            self._compile(join(self._here, "..", "arch", self._arch, self._platform, f"{self._platform}.co"))
-            self._compile(join(self._here, "..", "arch", self._arch, f"{self._arch}.co"))
-            self._compile(join(self._here, "..", "lib", self._arch, self._platform, "base.co"))
+            for path in sys_includes(self._arch, self._platform):
+                self._compile(path)
 
-            self._compile(join(self._here, "..", "lib", "core.co"))
+            #self._compile(join(self._here, "..", "lib", "core.co"))
         self._compile(f) 
         self.tape_out(base)
         
@@ -316,10 +330,15 @@ class Compiler:
         
         self._sections[0]['ptr'] = end
         self._compile(self._macros['compile'])
-        
         self.make_listing(f"{output}.{self._ext}.lst")
 
-        
+def sys_includes(arch, platform):
+    here = dirname(__file__)
+    return [
+        join(here, "..", "arch", arch, platform, f"{platform}.co"),
+        join(here, "..", "arch", arch, f"{arch}.co"),
+        join(here, "..", "lib", arch, platform, "base.co")
+    ]
 
 
 if __name__ == '__main__':
@@ -327,6 +346,16 @@ if __name__ == '__main__':
     
     arch, platform = sys.argv[1].split("/")
     source = sys.argv[2] 
+    tokens = []
+    if (len(sys.argv) >= 3 and sys.argv[3] == 'sys' and arch != 'raw'):
+        new_lines = [Token(Colour.DOC, '\n')] * 2
+        for path in sys_includes(arch, platform):
+            tokens.extend(new_lines + [Token(Colour.COMMENT, path.center(100, '-'))] + new_lines)
+            tokens.extend(Lexer(open(path)).all)
+        
+        tokens.extend(new_lines + [Token(Colour.COMMENT, source.center(100, '-'))] + new_lines)
     
-    Formatter(Lexer(open(source)).all).write(open(f"{source}.html", "w"))    
+    tokens.extend(Lexer(open(source)).all)
+    
+    Formatter(tokens).write(open(f"{source}.html", "w"))    
     Compiler(arch, platform, debug=False).compile(source)
