@@ -1,2 +1,2 @@
 #!/bin/zsh 
-PYTHONPATH=$(dirname $0) python3 -m bootstrap.compiler $1 $2
+PYTHONPATH=$(dirname $0) python3 -m bootstrap.compiler $@
