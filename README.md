@@ -6,6 +6,7 @@ A retargetable compiler heavily inspired by [colorForth](https://en.wikipedia.or
 |8/16*|AVR|Arduino|🚧|
 |16|x86-16|MSDOS|✔️|
 |64|x86-64|Linux|✔️|
+|64|arm64/aarch64|Mac OSX|✔️|
 
 *natively 8-bit, 16-bit programming model
 
