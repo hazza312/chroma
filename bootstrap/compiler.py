@@ -347,7 +347,7 @@ if __name__ == '__main__':
     arch, platform = sys.argv[1].split("/")
     source = sys.argv[2] 
     tokens = []
-    if (len(sys.argv) >= 3 and sys.argv[3] == 'sys' and arch != 'raw'):
+    if (len(sys.argv) > 3 and sys.argv[3] == 'sys' and arch != 'raw'):
         new_lines = [Token(Colour.DOC, '\n')] * 2
         for path in sys_includes(arch, platform):
             tokens.extend(new_lines + [Token(Colour.COMMENT, path.center(100, '-'))] + new_lines)
