@@ -1,0 +1,20 @@
+R init W (--) Initialisation sequence for platform
+    M 1a 80 03 10   W adr   x26, #28672 ; setup system sp
+    M 5f 03 00 91   W mov   sp, x26
+    M dc ff 02 10   W adr   x28, #24568 ; setup data sp
+    G $0 main W falls through to R exit W on return 
+
+R exit W (n --) Exit gracefully to operating system with exit code.
+    M 80 8f 5f f8   W ldr   x0, [x28, #-8]!
+    M 30 00 80 d2   W mov   x16, #1
+    M 01 10 00 d4   W svc   #0x80
+
+R emit W (ch --) Output a single    character to stdout.
+    M 9b 83 1f f8   W stur  x27, [x28, #-8]
+    M 20 00 80 d2   W mov   x0, #1; stdout
+    M 81 23 00 d1   W sub   x1, x28, #8
+    M 22 00 80 d2   W mov   x2, #1; 1 character
+    M 90 00 80 d2   W mov   x16, #4; 4=write system
+    M 01 10 00 d4   W svc   #0x80
+    M 9b 87 40 f8   W ldr   x27, [x28], #8
+    G ;

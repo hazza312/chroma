@@ -1,0 +1,142 @@
+W Language implementation for ARM64
+x28 = data stack pointer
+x27 = top of stack
+x26 = scratch register #1
+x25 = scratch register #2
+x24 = loop counter
+x23 = 'a' register
+
+I p32 W (--) (-- addr) Fill a placeholder and push current code addr on compile stack (internal).
+Y code ptr @ 0 i32 ;
+
+I ip@ W (--) (-- addr) Push instruction pointer on compile stack (internal).
+Y code ptr @ ;
+
+I brk W (--) Breakpoint exception (internal).
+    M 00 00 20 d4   W brk   #0 Y ;
+
+I dup W (a -- a a) Duplicate top element on stack
+    M 9b 8f 1f f8   W str   x27, [x28, #-8]! Y ;
+
+I drop W (a -- ) Drop top element on stack
+    M 9b 87 40 f8   W ldr   x27, [x28], #8 Y ;
+
+I drop W (a -- ) Drop top element on stack
+    M 9b 87 40 f8   W ldr   x27, [x28], #8 Y ;
+    
+I scratch W (--) Move tos into scratch register (internal use).
+    M fa 03 1b aa   W mov   x26, x27
+
+I nip W (a b -- b) Drop second on stack (into scratch register)
+    M 9a 87 40 f8   W ldr   x26, [x28], #8 Y ;
+
+I swap W (a b -- b a) Swap top two elements on stack
+    M 9a 03 40 f9   W ldr   x26, [x28]
+    M 9b eb 3f a9   W stp   x27, x26, [x28, #-8]
+    M fb 03 1a aa   W mov   x27, x26 Y ;
+
+I lit W (-- n) (n --) Push a literal to runtime stack 
+    #TODO currently only 16-bit immediates
+    G dup Y 5 shl $d280001b or i32 ; W see C6-1705
+
+I alit W (-- n) (n --) Push a literal address to runtime stack.
+    G dup
+    Y ip@ - dup 29 shl $3 and swap $3fffc and .S 5 shl .S or $1000001b or i32 ; W C6-1189
+
+
+I 1+ W (n -- n) Increment tos.
+    M 7b 07 00 91   W add   x27, x27, #1 Y ;
+
+I 1- W (n -- n) Decrement tos.
+    M 7b 07 00 d1   W sub   x27, x27, #1 Y ;
+    
+I neg W (n -- n) Negate tos.
+    M fb 03 1b cb   W neg   x27, x27 Y ;
+    
+    
+I + W (n n -- n) Add tos and nos.
+    G nip M 7b 03 1a 8b     W add   x27, x27, x26 Y ;
+    
+I - W (n n -- n) Subtract tos from nos.
+    G nip M 5b 03 1b cb     W sub   x27, x26, x27 Y ;
+    
+I * W (n n -- n) Multiply tos and nos.
+    G nip M 7b 7f 1a 9b     W mul   x27, x27, x26 Y ;
+
+I / W (n n -- q) Divide nos by tos, pushing quotient.
+    G nip M 5b 0f db 9a     W sdiv  x27, x26, x27 Y ;
+
+I mod W (n n -- r) Divide nos by tos, pushing remainder.
+    G nip
+    M 59 0f db 9a   W sdiv  x25, x26, x27
+    M 3b eb 1b 9b  	W msub  x27, x25, x27, x26 ; C6-1713 Y ;
+
+I /mod W (n n -- r q) Divide nos by tos, pushing remainder and quotient.
+      M 9a 87 40 f8 W ldr   x26, [x28], #8
+      M 59 0f db 9a W sdiv  x25, x26, x27
+      M 3b eb 1b 9b W msub  x27, x25, x27, x26
+      G dup
+      M fb 03 19 aa W mov   x27, x25
+    
+I and W (n n -- n) Bitwise and of tos & nos.
+    G nip M 7b 03 1a 8a     W and   x27, x27, x26 Y ;
+
+I or W (n n -- n) Bitwise or of tos | nos.
+    G nip M 7b 03 1a aa     W orr   x27, x27, x26 Y ;
+    
+I xor W (n n -- n) Bitwise xor of tos, nos.
+    G nip M 7b 03 1a ca     W eor   x27, x27, x26 Y ;
+
+
+I jmp W (--) (dst --) Compile a branch to dst.
+    Y ip@ - 2 shr $3ffffff and $14000000 or i32 ; W C6-1214
+
+I ; W (--) (ret --) Compile a subroutine return.
+    M fe 07 41 f8   W ldr   x30, [sp], #16
+    M c0 03 5f d6   W ret Y ;
+
+I call W (--) (dst --) Compile a call to dst.
+    M 7e 00 00 10   W adr   x30, #12
+    M fe 0f 1f f8   W str   x30, [sp, #-16]!
+    Y ip@ - 2 shr $3ffffff and $94000000 or i32 ; W C6-1229
+
+I if W (cond --) (-- op mask shift touchup) Prepare & push data for deferred if op construction.
+    G scratch drop Y $b400001a $00ffffe0 5 p32 ; W CPZ C6-1251 
+    
+I !if W (cond --) (-- op mask shift touchup) Execute following code if tos not 0, else branch.
+    G scratch drop Y $b500001a $00ffffe0 5 p32 ; W CPZ C6-1251 
+    
+I then W (--) (op mask shift touchup --) Construct (conditional) branch to current location.
+    Y dup >r ip@ swap - 2 shr swap shl and or r> i32! ;
+    
+I for W (n --) (-- addr) Begin a counted iteration loop.
+    #TODO 0 iterations
+    M f8 0f 1f f8   W str   x24, [sp, #-16]!
+    M f8 03 1b aa   W mov   x24, x27
+    G drop Y ip@ ;
+    
+I next W (--) (addr --) Mark end of counted iteration loop.
+    M 18 07 00 d1   W sub   x24, x24, #1
+    Y ip@ - 2 shr 5 shl $ffffe0 and $b5000018 or i32  
+    M f8 07 41 f8   W ldr   x24, [sp], #16 Y ;
+    
+I a! W (addr --) Store an address in the a register.
+    M f7 03 1b aa   W mov   x23, x27
+    G nip Y ;
+
+I +a W (--) Increment a register.
+    M f7 06 00 91   W add   x23, x23, #1 Y ;
+    
+I ++a W (--) Increment a register by cell size
+    M f7 22 00 91   W add   x23, x23, #8 Y ;
+    
+I a W (-- a) Retrieve a register.
+    G dup M fb 03 17 aa     W mov   x27, x23 Y ;
+    
+I !a W (val --) Store via a register.
+    M fb 02 00 f9  W str   x27, [x23]
+    G drop Y ;
+
+I @a W (-- val) Fetch via a register.
+    G dup M fb 02 40 f9 W ldr   x27, [x23] Y ;
+

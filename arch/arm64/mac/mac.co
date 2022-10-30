@@ -6,73 +6,11 @@ I b64 Y 0 w64 ;
 I b32 Y 0 w32 ;
 I i32 Y 1 w32 ;
 
+$1000 code base ! $1000 code ptr !
+$4000 data base ! $4000 data ptr !
 
-W Implementation notes:
-r28 data sp
-r27 tos
-
-Y code magic!
-
-W compiler
-
-I brk 
-M 00 00 20 d4 W 	brk	#0 Y ;
-
-W stack manipulators
-I dup W (a -- a a) Duplicate top element on stack
-M 9b 8f 1f f8  	W str x27, [x28, #-8]! Y ;
-
-I drop W (a -- ) Drop top element on stack
-M 9b 87 40 f8  	W ldr x27, [x28], #8 Y ;
-
-I nip W (a b -- b) Drop second on stack
-M 9a 87 40 f8 W ldr x26, [x28], #8 Y ;
-
-I swap W (a b -- b a) Swap top two elements on stack
-M 9a 03 40 f9  	W ldr	x26, [x28]
-M 9b eb 3f a9  	W stp	x27, x26, [x28, #-8]
-M fb 03 1a aa  	W mov	x27, x26 Y ;
-
-I lit W (-- n) (n --) Push a literal to runtime stack 
-#TODO currently only 16-bit immediates
-G dup Y 5 shl $d280001b or i32 ; W see C6-1705
-
-I jmp W (--) (dst --) Compile a branch to dst.
-Y code ptr @ - 2 shr $3ffffff and $14000000 or i32 ; W C6-1214
-
-I call W (--) (dst --) Compile a call to dst.
-Y code ptr @ - 2 shr $3ffffff and $94000000 or i32 ; W C6-1229
-
-R init W (--) Initialisation sequence for platform
-	W setup stack ptr
-    M 1c 80 03 10  	W adr	x28, #28672
-	G 97 98 swap swap
-	
-G emit
-
-R emit W (ch --) Output a single character to stdout.
-	M 9b 83 1f f8  W 	stur x27, [x28, #-8]
-    M 20 00 80 d2  W	mov	x0, #1; stdout
-	M 81 23 00 d1  W	sub	x1, x28, #8
-    M 22 00 80 d2  W 	mov	x2, #1; 1 character
-    M 90 00 80 d2  W	mov	x16, #4; 4=write syscall
-    M 01 10 00 d4  W	svc	#0x80
-	M 9b 87 40 f8  W 	ldr	x27, [x28], #8
-
-G 97 emit ;
-
-R exit W (n --) Exit gracefully to operating system with exit code.
-    M 80 8f 5f f8  W	ldr	x0, [x28, #-8]!
-    M 30 00 80 d2  W	W mov	x16, #1
-    M 01 10 00 d4  W 	W svc	#0x80
-R end
-
-Y data magic!
-M 48 65 6c 6c 6f 20 57 6f 72 6c 64 21 a 0 0 0 W "Hello World!"
-
-
-Y 0 magic!
 I compile 
+Y 0 magic!
 M
 W see mach-o/loader.h
 W mach header
