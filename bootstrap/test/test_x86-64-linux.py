@@ -7,17 +7,9 @@ from time import sleep
 
 from ..compiler import Compiler
 
-from .test_common import *
+from .test_suites import CompleteTestSuite
 
-class X8664Test(
-    BasicStackOperations, 
-    BasicArithmeticLogicOperations,
-    DivisionOperations,
-    ConditionalOperations,
-    ForNext,
-    ARegisterTests,
-    TestCase
-):
+class X8664Test(CompleteTestSuite, TestCase):
     arch = "x86-64"
     platform = "Linux"
     ext = "out"

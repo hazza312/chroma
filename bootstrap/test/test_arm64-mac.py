@@ -7,17 +7,9 @@ from time import sleep
 
 from ..compiler import Compiler
 
-from .test_common import *
+from .test_suites import CompleteTestSuite
 
-class ARM64MacTest(
-    BasicStackOperations, 
-    BasicArithmeticLogicOperations,
-    DivisionOperations,
-    ConditionalOperations,
-    ForNext,
-    ARegisterTests,
-    TestCase
-):
+class ARM64MacTest(CompleteTestSuite, TestCase):
     arch = "arm64"
     platform = "mac"
     ext = "out"

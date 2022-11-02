@@ -7,17 +7,10 @@ from time import sleep
 
 from ..compiler import Compiler
 
-from .test_common import *
+from .test_suites import CompleteTestSuite
 
 
-class ArduinoTest(
-    SimpleEmit,
-    BasicStackOperations,
-    BasicArithmeticLogicOperations,
-    ConditionalOperations,
-    ForNext,
-    TestCase
-):
+class ArduinoTest(CompleteTestSuite, TestCase):
     arch = "avr8"
     platform = "Arduino"
     ext = "bin" 
@@ -25,7 +18,7 @@ class ArduinoTest(
 
     def execute(self, binary) -> str:
         try:
-            run(["/home/harry/apps/qemu/qemu-system-avr", 
+            run(["qemu-system-avr", 
                 "-machine", "uno",
                 "-bios", binary, 
                 "-nographic"],
