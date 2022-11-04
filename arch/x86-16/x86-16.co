@@ -1,12 +1,166 @@
 W i386/16 Core 
-W stack I nip M 46 46 I drop M ad I dup M 4e 4e 89 04 
-W numeric I lit G dup M b8 Y i16 I + M 03 04 G nip I - M 93 ad 29 d8 I 1+ M 40 I 1- M 48    
-W logic I and M 23 04 G nip I or M 0b 04 G nip I xor M 33 04 G nip I rol M 51 91 ad d3 c0 59 
-W branch I jnz M 75 00  I jz M 74 00 I jns M 79 00  I js M 78 00  I test M 85 c0 G drop Y ;
-W flow I ; M c3  I hlt M F4 
-W memory I ! M 93 ad 89 07 ad I @ M 93 8b 07  
-I shr M 51 91 ad d3 e8 59 Y ;
+W tos=ax
+W scratch=bx
+W loop=cx
+W dsp=si
+W ssp=sp
 
+I nip W (a b -- b) Remove second on stack.
+	M 46 46 		W inc si; inc si Y ;
+
+I drop W (a --) Drop tos.
+	M ad 			W lodsw Y ;
+
+I dup W (a -- a a) Duplicate tos.
+	M 4e 4e 89 04 	W dec si; dec si; mov [si], ax Y ;
+
+I over W (a b -- a b a) Push nos.
+	G dup 
+	M 8b 44 02		W mov ax, [si+2] Y ;
+
+I lit W (-- n) (n --) Push a literal at runtime on the stack.
+	G dup 
+	M b8 Y i16 		W mov ax, ?? Y ;
+
+I + W (a b -- a) Add tos and nos.
+	M 03 04 		W add ax, [si]
+	G nip Y ;
+	
+I - W (a b -- a) Subtract tos from nos.
+	M 93 ad 29 d8	W  Y ;
+	
+I 1+ W (n -- n) Increment tos.
+	M 40			W inc ax Y ;
+	
+I 1- W (n -- n) Decrement tos. 
+	M 48 			W dec ax Y ;
+	
+I neg W (n -- n) Negate tos.
+	M f7 d8 		W neg ax ; Y ;
+	
+I * W (a b -- n) Multiply tos by nos.
+	M 93 			W xchg ax, bx 
+	G drop
+	M 0f af c3 		W imul ax, bx Y ;
+	
+I /mod W (a b -- r q) Divide nos by tos, pushing remainder then quotient.
+	M 8b 1c 		W mov bx, [si]
+	M 93			W xchg ax, bx 
+	M 31 d2 		W xor dx, dx
+	M f7 fb 		W idiv bx 
+	M 89 14			W mov [si], dx Y ;
+	
+I / W (a b -- q) Divide nos by tos pushing quotient.
+	M 93			W xchg ax, bx 
+	G drop 
+	M 31 d2 		W xor dx, dx
+	M f7 fb 		W idiv bx Y ;
+	
+I mod W (a b -- r) Divide nos by tos pushing remainder.
+	G /
+	M 92 			W xchg ax, dx Y ;
+
+I and W (a b -- n) Bitwise and of nos and tos.
+	M 23 04 
+	G nip Y ;
+	
+I or W (a b -- n) Bitwise or of nos and tos.
+	M 0b 04 
+	G nip Y ;
+	
+I xor W (a b -- n) Bitwise xor of nos and tos.
+	M 33 04 
+	G nip Y ;
+	
+I rol W rot?
+	M 51 91 ad d3 c0 59 Y ;
+	
+I shr W (n k -- n) Shift n right k places. 
+	M 51 91 ad d3 e8 59 Y ;
+	
+I shl W (n k -- n) Shift n left k places.
+	M 87 d9			W xchg bx, cx 
+	M 91 			W xchg ax, cx 
+	M ad 			W lodsw
+	M d3 e0 		W shl ax, cl 
+	M 87 d9 		W xchg bx, cx Y ;
+
+W branch 
+I jnz M 75 00 Y ;
+I jz M 74 00 Y ;
+I jns M 79 00 Y ;
+I js M 78 00 Y ;
+I test M 85 c0 G drop Y ;
+
+I ; W (--) (addr --) Return from a subroutine call.
+	M c3  			W ret Y ;
+	
+I ;; W (--) (addr count --) Return inside loop.
+	M 5b 			W pop bx
+	G ;	Y ;
+	
+I go W (addr --) Indirect call tos.
+	M 93 			W xchg ax, bx 
+	G drop 
+	M ff d3 		W call bx 
+
+I hlt W (--) Immediately halt. 
+	M F4 Y ;
+	
+I >r W (n --) (-- n) Transfer tos to return stack.
+	M 50 			W push ax 
+	G drop Y ;
+
+I r> W (-- n) (n --) Transfer top of return stack to data stack.
+	G dup 
+	M 58 			W pop ax Y ;
+
+I r@ W (-- n) (n -- n) Copy top of return stack to tos.
+	G dup 
+	M 58 			W pop ax 
+	M 50 			W push ax Y ;
+
+I ! W (n addr --) Store cell value nos at addr tos.
+	M 93 			W xchg ax, bx
+	G drop 
+	M 89 07 		W mov word [bx], ax
+	G drop Y ;  
+	
+I @ W (addr -- n) Fetch cell value at addr tos.
+	M 93 			W xchg ax, bx
+	M 8b 07 		W mov ax, [bx] Y ;
+
+I c@ W (addr -- n) Fetch byte at addr tos.
+	M 93 			W xchg ax, bx 
+	M 8a 07			W mov al, [bx] Y ;
+	
+I c! W (n addr --) Store byte nos at address tos.
+	M 93 			W xchg ax, bx
+	G drop
+	M 88 07 		W mov [bx], al
+	G drop Y ;
+
+I a! W (addr --) Store address in the a register.
+	M 89 c7 		W mov di, ax 
+	G drop Y ;
+
+I a W (-- addr) Fetch contents of a register.
+	G dup 
+	M 89 f8 		W mov ax, di Y ;
+	
+I !a W (val --) Store via a register.
+	M 89 f8 		W mov [di], ax 
+	G drop Y ;
+
+I @a W (-- val) Fetch via a register.
+	G dup 
+	M 8b 05 		W mov ax, [di] Y ;
+	
+I ++a W (--) Increment a register by a cell.
+	M 47 47 		W inc di; inc di Y ;
+	
+I +a W (--) Increment a register by a byte.
+	M 47 47 		W inc di Y ;
 
 
 W Language implementation
@@ -14,6 +168,10 @@ I -if G test jns Y ip@ 1 - ;
 I if G test jz Y ip@  1 - ; 
 I !if G test jnz Y ip@  1 - ; 
 I then Y dup 1 + ip@ swap - swap i8! Y ; 
-I for M 51 91 G drop Y ip@ I next M e2 Y ip@ - 1 - i8 M 59 
-I call Y ip@ - 3 - M e8 Y i16 I jmp Y ip@ - 3 - M e9 Y i16 
+
+I for M 51 91 G drop Y ip@ 
+I next M e2 Y ip@ - 1 - i8 M 59 
+I call Y ip@ - 3 - M e8 Y i16 
+I jmp Y ip@ - 3 - M e9 Y i16 
+
 I str Y data ptr @ lit dup len data w8 data cpy Y ; 
