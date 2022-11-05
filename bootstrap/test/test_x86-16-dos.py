@@ -19,9 +19,9 @@ class DOSTest(CompleteTestSuite, TestCase):
         run(["dosbox", 
             "-c", f"mount c {self.tmp}",
             "-c", f"c:",
-            "-c", "test.com > OUT.TXT",
+            "-c", f"test{self.test_no}.com > OUT{self.test_no}.TXT",
             "-c", "exit"], timeout=2, env={"SDL_VIDEODRIVER": "dummy"})
 
-        with open(join(self.tmp, "OUT.TXT")) as f:
+        with open(join(self.tmp, f"OUT{self.test_no}.TXT")) as f:
             return f.read() 
     
