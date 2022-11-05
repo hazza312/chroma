@@ -6,5 +6,5 @@ W __ M 10 93 c5 00 08 e1 00 93
 W __ M c1 00 
 G main M 98 95 R hlt G hlt ;
 
-R emit M 90 91 c0 00 95 ff fc cf 80 93 c6 00 Y pop G ;
+R emit M 90 91 c0 00 95 ff fc cf 80 93 c6 00 G drop G ;
 

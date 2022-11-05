@@ -1,20 +1,27 @@
 from .test_common import *
 
-class CompleteTestSuite(
+class BaseTestSuite(
     SimpleEmit,
     BasicStackOperations, 
     BasicArithmeticOperations,
     BasicLogicOperations,
     ShiftRotationOperations,
     ReturnStackOperations,
-    MultiplicationDivisionOperations,
     ConditionalOperations,
     BranchingOperations,
     SubroutineCallOperations,
     CountedLoopOperations,
     BasicMemoryOperations,
     ARegisterTests,
-    StringTests,
+    StringTests
+):
+    """Test suite implementing base words"""
+    pass
+    
+class CompleteTestSuite(
+    BaseTestSuite,
+    MultiplicationDivisionOperations,
+    StringTests
 ):
     """
     Test suite for a system implementing all words.

@@ -7,10 +7,11 @@ from time import sleep
 
 from ..compiler import Compiler
 
-from .test_suites import CompleteTestSuite
+from .test_suites import BaseTestSuite
+from .test_common import SixteenBitLECompliance
 
 
-class ArduinoTest(CompleteTestSuite, TestCase):
+class ArduinoTest(BaseTestSuite, SixteenBitLECompliance, TestCase):
     arch = "avr8"
     platform = "Arduino"
     ext = "bin" 

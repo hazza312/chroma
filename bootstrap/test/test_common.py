@@ -85,6 +85,9 @@ class BasicArithmeticOperations(ChromaTest):
 
     def test_addition(self):
         self.attempt("R main G $30 $1 + emit ;", "1")
+    
+    def test_subtraction(self):
+        self.attempt("R main G $32 1 - emit ;", "1")
 
     def test_increment(self):
         self.attempt("R main G $30 1+ emit ;", "1")
@@ -304,3 +307,22 @@ class StringTests(ChromaTest):
         
     def test_char_array_stored(self):
         self.attempt('R main G "hello" 1+ 5 for dup c@ emit 1+ next ;', 'hello')
+        
+
+class SixteenBitLECompliance(ChromaTest):
+    """
+    Architectures should provide at least 16-bit arithmetic.
+    Explore here certain edge cases -- particularly for 8-bit systems 
+    non-natively implementing larger data widths.    
+    """
+    def test_16_bit_lit_low(self):
+        self.attempt('R main G $3031 $ff and emit ;', '1')
+    
+    def test_16_bit_lit_hi(self):
+        self.attempt('R main G $3130 8 shr $ff and emit ;', '1')
+    
+    def test_16_add_rollover(self):
+        self.attempt('R main G $ff 1 + dup $30 + emit 8 shr $30 + emit ;', '00')
+    
+    
+    

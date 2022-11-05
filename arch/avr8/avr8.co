@@ -12,8 +12,10 @@ W make binary Y text write padding data write ;
 
 W AVR Ops ==================
 Y text magic!
+W tos=r24:r25
+W scratch=r22:23
+W loop=r20:r21
 
-W ToS is R16:R17, later make it R24:R25 (optimise immediate adds);
 W Xlo = R26, Xhi = R27
 I Xlo Y 26 ; 
 I Xhi Y 27 ;
@@ -21,27 +23,113 @@ I Tlo Y 24 ;
 I Thi Y 25 ;
 
 I ldi W (val Rd[16..32] --) Y 
-16 - 4 shl $e000 or swap dup $00f0 and 4 shl swap $000f and or or i16 ;
+    16 - 4 shl $e000 or swap dup $00f0 and 4 shl swap $000f and or or i16 ;
 
-I break M 98 95 Y ;
-I push M 8d 93 9d 93 Y ;
-I pop M 9e 91 8e 91 Y ;
-I popb M 7e 91 6e 91 Y ;
+I break 
+    M 98 95 Y ;
 
-I drop Y pop ;
-I dup Y push ; 
-I nip M 12 97 Y ;
+I dup W (a -- a a) Duplicate tos.
+    M 8d 93             W st X+, r24
+    M 9d 93             W st X+, r25 Y ;
 
-I lit Y push dup Y $00ff and 24 ldi 8 shr 25 ldi ;
+I drop W (a --) Drop tos.
+    M 9e 91             W ld r25, -X
+    M 8e 91             W ld r24, -X Y ;
+
+I popb W (a --) Load tos into scratch register (internal).
+    M 7e 91             W ld r23, -X
+    M 6e 91             W ld r22, -X Y ;
+
+I pushb W (-- a) Push scratch reguster (internal).
+    M 6d 93             W st X+, r22
+    M 7d 93             W st X+, r23 Y ;
+
+I nip W (a b -- b) Drop nos. 
+    M 12 97             W sbiw r26, 2 Y ;
+    
+I over W (a b -- a b a) Push nos.
+    W #TODO more efficient way to implement?
+    G popb pushb dup 
+    M cb 01             W movw r25:r24, r23:r22 Y ;
+    
+I swap W (a b -- b a) Swap tos and nos.
+    G popb dup
+    M cb 01             W movw r25:r24, r23:r22 Y ;
+    
+I >r W (n --) (-- n) Drop tos and push on return stack.
+    G popb
+    M 8f 93             W push r24
+    M 9f 93             W push r25
+    M cb 01             W movw r25:r24, r23:r22 Y ;
+    
+I r> W (-- n) (n --) Push the popped value from return stack.
+    G dup 
+    M 9f 91             W pop r25
+    M 8f 91             W pop r24 Y ;
+    
+I r@ W (-- n) (n --) Push the popped value from return stack.
+    G dup 
+    M 9f 91             W pop r25
+    M 8f 91             W pop r24
+    M 8f 93             W push r24
+    M 9f 93             W push r25 Y ;
+
+I lit 
+    G dup 
+    Y dup $00ff and 24 ldi 8 shr 25 ldi ;
+    
 I jmp Y ip@ 2 + - 1 shr $0fff and $C000 or i16 ;
 I call Y ip@ 2 + - 1 shr $0fff and $D000 or i16 ;
 I ; M 08 95 Y ;
 
-I 1+ M 01 96 Y ;
-I 1- M 01 97 Y ;
-I + Y popb M 86 0f 97 1f Y ;
+I 1+ W (n -- n) Increment tos. 
+    M 01 96             W adiw r24, 1 Y ;
+    
+I 1- W (n -- n) Decrement tos.
+    M 01 97             W adiw r24, -1 Y ;
+    
+I + W (a b -- a) Add tos to nos.
+    G popb 
+    M 86 0f             W add r24, r22
+    M 97 1f             W adc r25, r23 Y ;
+
+I - W (a b -- a) Subtract tos from nos.
+    G popb 
+    M 68 1b             W sub r22, r24
+    M 79 0b             W sbc r23, r25 
+    M cb 01             W movw r25:r24, r23:r22 Y ;
+
+I neg W (n -- n) Negate tos
+    M 66 27             W clr r22
+    M 77 27             W clr r23
+    M 68 1b             W sub r22, r24
+    M 79 0b             W sbc r23, r25 
+    M cb 01             W movw r25:r24, r23:r22 Y ;
+
 
 I and Y popb M 86 23 97 23 Y ;
-I or Y popb M 86 2b 97 2b Y ;
-I xor Y popb M 86 2f 97 2f Y ;
+I or 
+    Y popb M 86 2b 97 2b Y ;
 
+I xor W (a b -- a) Xor tos and nos.
+    G popb
+    M 86 27             W eor r24, r22
+    M 97 27             W eor r25, r23 Y ;
+
+I shr W (n k -- n) Shift nos right k bits.
+    W #TODO undefined behaviour when k=0 or k > $ff
+    G popb
+    M 76 95             W lsl r23 <- l
+    M 67 95             W ror r22
+    M 8a 95             W dec r24 
+    M e1 f7             W brne shr 
+    M cb 01             W movw r25:r24, r23:r22 Y ;
+
+I shl W (n k -- n) Shift nos left k bits.
+    W #TODO undefined behaviour when k=0 or k > $ff
+    G popb
+    M 66 0f             W lsl r22 <- l
+    M 77 1f             W rol r23
+    M 8a 95             W dec r24
+    M e1 f7             W brne l
+    M cb 01             W movw r25:r24, r23:r22 Y ;
