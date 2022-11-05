@@ -24,7 +24,7 @@ jobs:
       run: pip install pytest
     
     - name: Run tests
-      run: pytest bootstrap/test/test_x86-64-linux.py
+      run: pytest --tb=no bootstrap/test/test_x86-64-linux.py
         
   test_x86-16_Dos:
     name: Test on x86-16 DOS (Dosbox)
@@ -42,7 +42,7 @@ jobs:
         pip install pytest
     
     - name: Run tests
-      run: pytest bootstrap/test/test_x86-16-dos.py
+      run: pytest --tb=no bootstrap/test/test_x86-16-dos.py
         
   test_avr8_arduino:
     name: Test on avr8 Arduino (QEMU)
@@ -58,4 +58,4 @@ jobs:
     - name: Install dependencies
       run: pip install pytest
     - name: Run tests
-      run: pytest bootstrap/test/test_avr8_arduino.py
+      run: pytest --tb=no bootstrap/test/test_avr8_arduino.py
