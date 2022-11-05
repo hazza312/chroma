@@ -1,7 +1,7 @@
 from unittest import TestCase
 from tempfile import gettempdir
 from os import chmod
-from os.path import join
+from os.path import join, basename
 from subprocess import run
 from time import sleep
 
@@ -16,12 +16,15 @@ class DOSTest(CompleteTestSuite, TestCase):
     tmp = gettempdir() 
 
     def execute(self, binary) -> str:
-        run(["/opt/homebrew/bin/dosbox", 
+        bin = basename(binary)
+        output = bin.split(".")[0].upper()
+        
+        run(["dosbox", 
             "-c", f"mount c {self.tmp}",
             "-c", f"c:",
-            "-c", "test.com > OUT.TXT",
+            "-c", f"{bin} > {output}",
             "-c", "exit"], timeout=2, env={"SDL_VIDEODRIVER": "dummy"})
 
-        with open(join(self.tmp, "OUT.TXT")) as f:
+        with open(join(self.tmp, output)) as f:
             return f.read() 
     
