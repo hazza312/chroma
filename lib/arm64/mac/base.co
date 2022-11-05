@@ -9,7 +9,7 @@ R exit W (n --) Exit gracefully to operating system with exit code.
     M 30 00 80 d2   W mov   x16, #1
     M 01 10 00 d4   W svc   #0x80
 
-R emit W (ch --) Output a single    character to stdout.
+R emit W (ch --) Output a single character to stdout.
     M 9b 83 1f f8   W stur  x27, [x28, #-8]
     M 20 00 80 d2   W mov   x0, #1; stdout
     M 81 23 00 d1   W sub   x1, x28, #8
@@ -18,3 +18,23 @@ R emit W (ch --) Output a single    character to stdout.
     M 01 10 00 d4   W svc   #0x80
     M 9b 87 40 f8   W ldr   x27, [x28], #8
     G ;
+    
+R print W (arr n --) Output a character array to stdout.
+    M 20 00 80 d2  	W mov   x0, #1
+    M 81 87 40 f8   W ldr   x1, [x28], #8
+    M e2 03 1b aa  	W mov   x2, x27
+    M 90 00 80 d2  	W mov   x16, #4
+    M 01 10 00 d4  	W svc   #0x80
+    G drop ;
+    
+R getc W (-- ch ch?) Get a single character from stdin.
+    G dup
+    M 9c 23 00 d1   W sub   x28, x28, #8
+    M 00 00 80 d2   W mov   x0, #0
+    M e1 03 1c aa   W mov   x1, x28
+    M 22 00 80 d2   W mov   x2, #1
+    M 70 00 80 d2   W mov   x16, #3
+    M 01 10 00 d4   W svc   #0x80
+    M fb 03 00 aa   W mov   x27, x0 
+    G ;
+    
