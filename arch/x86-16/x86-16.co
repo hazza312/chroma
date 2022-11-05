@@ -13,6 +13,11 @@ I drop W (a --) Drop tos.
 
 I dup W (a -- a a) Duplicate tos.
 	M 4e 4e 89 04 	W dec si; dec si; mov [si], ax Y ;
+    
+I swap W (a b -- b a) Swap tos and nos.
+    M 8b 1c         W mov bx, [si]
+    M 89 04         W mov [si], ax 
+    M 93            W xchg ax, bx Y ;
 
 I over W (a b -- a b a) Push nos.
 	G dup 
@@ -57,8 +62,11 @@ I / W (a b -- q) Divide nos by tos pushing quotient.
 	M f7 fb 		W idiv bx Y ;
 	
 I mod W (a b -- r) Divide nos by tos pushing remainder.
-	G /
-	M 92 			W xchg ax, dx Y ;
+	M 31 d2 		W xor dx, dx
+	M 93			W xchg ax, bx 
+	G drop
+	M f7 fb 		W idiv bx 
+    M 92            W xchg ax, dx Y ;
 
 I and W (a b -- n) Bitwise and of nos and tos.
 	M 23 04 
@@ -72,8 +80,21 @@ I xor W (a b -- n) Bitwise xor of nos and tos.
 	M 33 04 
 	G nip Y ;
 	
-I rol W rot?
-	M 51 91 ad d3 c0 59 Y ;
+I rot W (a b c -- b c a) Rotate stack one place.
+    M 8B 1C         W mov bx,[si]
+    M 8B 54 02      W mov dx,[si+0x2]
+    M 89 5C 02      W mov [si+0x2],bx
+    M 89 04         W mov [si],ax
+    M 92            W xchg ax,dx Y ;
+
+I -rot W (a b c -- c a b) Rotate stack one place.
+    M 8B 1C         W mov bx,[si]
+    M 8B 54 02      W mov dx,[si+0x2]
+    M 89 44 02      W mov [si+0x2],ax
+    M 89 14         W mov [si],dx
+    M 93            W xchg ax,bx Y ;
+    
+I rol G rot Y ;
 	
 I shr W (n k -- n) Shift n right k places. 
 	M 51 91 ad d3 e8 59 Y ;
@@ -149,7 +170,7 @@ I a W (-- addr) Fetch contents of a register.
 	M 89 f8 		W mov ax, di Y ;
 	
 I !a W (val --) Store via a register.
-	M 89 f8 		W mov [di], ax 
+	M 89 05 		W mov [di], ax 
 	G drop Y ;
 
 I @a W (-- val) Fetch via a register.
@@ -160,7 +181,7 @@ I ++a W (--) Increment a register by a cell.
 	M 47 47 		W inc di; inc di Y ;
 	
 I +a W (--) Increment a register by a byte.
-	M 47 47 		W inc di Y ;
+	M 47 		    W inc di Y ;
 
 
 W Language implementation

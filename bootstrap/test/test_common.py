@@ -127,10 +127,10 @@ class ShiftRotationOperations(ChromaTest):
         self.attempt(f"R main G {ord('0') >> 1} 1 shl emit ;", "0")
         
     def test_rot(self):
-        self.attempt("R main G $31 $32 $33 rot emit emit emit", "132")
+        self.attempt("R main G $31 $32 $33 rot emit emit emit ;", "132")
     
     def test_nrot(self):
-        self.attempt("R main G $31 $32 $33 -rot emit emit emit", "213")
+        self.attempt("R main G $31 $32 $33 -rot emit emit emit ;", "213")
 
 
 class ReturnStackOperations(ChromaTest):
@@ -141,13 +141,13 @@ class ReturnStackOperations(ChromaTest):
     """
     
     def test_to_rstack(self):
-        self.attempt("R main G $39 $30 >r emit ;", "9")
+        self.attempt("R main G $39 $30 >r emit r> ;", "9")
     
     def test_to_from_rstack(self):
         self.attempt("R main G $39 $30 $31 >r >r r> r> emit emit emit ;", "109")
         
     def test_rdup(self):
-        self.attempt("R main G $39 $31 >r r@ emit ;", "1")
+        self.attempt("R main G $39 $31 >r r@ emit r> ;", "1")
 
 
 class MultiplicationDivisionOperations(ChromaTest):
@@ -167,7 +167,7 @@ class MultiplicationDivisionOperations(ChromaTest):
         self.attempt("R main G 13 2 / $30 + emit ;", "6")
 
     def test_mod(self):
-        self.attempt("R main G 11 10 mod $30 + emit", "1")
+        self.attempt("R main G 11 10 mod $30 + emit ;", "1")
 
 
 class ConditionalOperations(ChromaTest):
@@ -224,7 +224,7 @@ class SubroutineCallOperations(ChromaTest):
         
     def test_recursion(self):
         factorial = "R f G dup !if drop 1 ; then dup 1- f * ; "
-        self.attempt(factorial + "R main G 3 f $30 + emit", "6")
+        self.attempt(factorial + "R main G 3 f $30 + emit ;", "6")
         
 
 class CountedLoopOperations(ChromaTest):
@@ -276,21 +276,21 @@ class ARegisterTests(ChromaTest):
     """
     
     def test_simple_set_get(self):
-        self.attempt("R main G $30 a! a emit", "0")
+        self.attempt("R main G $30 a! a emit ;", "0")
 
     def test_simple_increment(self):
-        self.attempt("R main G $30 a! +a a emit", "1")
+        self.attempt("R main G $30 a! +a a emit ;", "1")
 
     def test_store_retrieve(self):
-        self.attempt("R main P char G char a! $30 !a @a emit", "0")
+        self.attempt("R main P char G char a! $30 !a @a emit ;", "0")
 
     def test_store_increment_retrieve(self):
-        self.attempt("R main P buf G buf a! +a $30 !a buf a! +a @a emit", "0")
+        self.attempt("R main P buf G buf a! +a $30 !a buf a! +a @a emit ;", "0")
 
     def test_increment_increment_word_retrieve(self):
-        store = "buf a! 8 for +a next $30 !a"
-        retrieve = "buf a! ++a @a"
-        self.attempt("R main P buf G " + store + " " + retrieve + " emit", "0")
+        store = "buf a! $30 16 for dup !a ++a 1+ next "
+        retrieve = "buf a! ++a @a "
+        self.attempt("R main P buf G " + store + " " + retrieve + " $ff and emit ;", "1")
        
 
 class StringTests(ChromaTest):
