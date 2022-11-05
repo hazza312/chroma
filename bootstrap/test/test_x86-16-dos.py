@@ -16,7 +16,7 @@ class DOSTest(CompleteTestSuite, TestCase):
     tmp = gettempdir() 
 
     def execute(self, binary) -> str:
-        run(["/opt/homebrew/bin/dosbox", 
+        run(["dosbox", 
             "-c", f"mount c {self.tmp}",
             "-c", f"c:",
             "-c", "test.com > OUT.TXT",
