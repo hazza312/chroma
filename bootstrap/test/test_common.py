@@ -13,8 +13,8 @@ class ChromaTest:
     
     def attempt(self, source, expect):
         self.test_no += 1
-        src_path = join(self.tmp, f"test{test_no}.co")
-        exec_path = join(self.tmp, f"test{test_no}.{self.ext}")
+        src_path = join(self.tmp, f"test{self.test_no}.co")
+        exec_path = join(self.tmp, f"test{self.test_no}.{self.ext}")
 
         with open(src_path, "w") as f:
             f.write(source)
