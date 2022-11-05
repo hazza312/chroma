@@ -40,7 +40,7 @@ jobs:
         sudo apt install dosbox
     
     - name: Run tests
-      run: pytest -n 8 --tb=no --verbose bootstrap/test/test_x86-16-dos.py
+      run: pytest --tb=no --verbose bootstrap/test/test_x86-16-dos.py
         
   test_avr8_arduino:
     name: Test on avr8 Arduino (QEMU)
