@@ -17,6 +17,11 @@ I lit W R(-- n) C(n --) Emit code to push literal onto runtime stack.
 W TODO 64-bit or smaller literals
 G dup M b8 Y code w32
 
+I over W (a b -- a b a) Push nos.
+    M 48 8b 1e              W mov rbx, [rsi]
+    G dup
+    M 48 93                 W xchg rax, rbx W ;
+
 I ; W (--) Return from a function call.
 M c3 Y ;
 
@@ -47,6 +52,12 @@ Y /mod nip ;
 
 I mod W (a b -- r) Divide a by b and push remainder.
 Y /mod G swap drop Y ;
+
+I * W (a b -- a) Multiply tos by nos.
+    M 48 93                     W xchg rax, rbx
+    G drop
+    M 48 0f af c3               W imul rax, rbx Y ;              
+    
 
 I test W (n --) Helper, test tos and set flags (arch-specific).
 TODO simplification?
@@ -100,8 +111,23 @@ I shl M 51 48 91 48 ad 48 d3 e0 59 Y ;
 I str Y data ptr @ lit dup len data w8 data cpy
 I and M 48 93 G drop M 48 21 D8 Y ;
 I shr M 51 48 91 G drop M 48 D3 E8 59 Y ;
+
+I xor W (a b -- a) Bitwise or of nos and tos.
+    M 48 93             W xchg rax, rbx
+    G drop
+    M 48 31 d8          W xor rax, rbx Y ;
+    
+I or W (a b -- a) Bitwise or of nos and tos.
+    M 48 93             W xchg rax, rbx
+    G drop
+    M 48 09 d8          W xor rax, rbx Y ;
+
 I @ M 48 93 48 8b 03 Y ;
 I ! M 48 89 c5 48 ad 48 89 45 00 48 ad Y ;
+
+I c@ W (addr -- val) Fetch byte at addr tos.
+    M 8a 00             W mov al, [rax] Y ;
+
 I neg M 48 f7 d8 Y ;
 
 I a! M 49 96 48 ad Y ;
