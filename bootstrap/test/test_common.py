@@ -9,12 +9,11 @@ from ..compiler import Compiler, UndefinedWordException
 
 
 class ChromaTest:
-    test_no = 0
     
     def attempt(self, source, expect):
-        self.test_no += 1
-        src_path = join(self.tmp, f"test{self.test_no}.co")
-        exec_path = join(self.tmp, f"test{self.test_no}.{self.ext}")
+        id = hash(source) % 10000
+        src_path = join(self.tmp, f"test{id}.co")
+        exec_path = join(self.tmp, f"test{id}.{self.ext}")
 
         with open(src_path, "w") as f:
             f.write(source)
