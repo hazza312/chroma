@@ -22,7 +22,7 @@ jobs:
         cache: 'pip'   
     - run: pip install -r requirements.txt
     - name: Run tests
-      run: pytest --tb=no bootstrap/test/test_x86-64-linux.py
+      run: pytest --tb=no --verbose bootstrap/test/test_x86-64-linux.py
         
   test_x86-16_Dos:
     name: Test on x86-16 DOS (Dosbox)
@@ -37,10 +37,10 @@ jobs:
     - name: Install dependencies
       run: | 
         pip install -r requirements.txt
-        run: sudo apt install dosbox
+        sudo apt install dosbox
     
     - name: Run tests
-      run: pytest -n 8 --tb=no bootstrap/test/test_x86-16-dos.py
+      run: pytest -n 8 --tb=no --verbose bootstrap/test/test_x86-16-dos.py
         
   test_avr8_arduino:
     name: Test on avr8 Arduino (QEMU)
@@ -55,4 +55,4 @@ jobs:
         cache: 'pip'
     - run: pip install -r requirements.txt
     - name: Run tests
-      run: pytest --tb=no bootstrap/test/test_avr8_arduino.py
+      run: pytest --tb=no --verbose bootstrap/test/test_avr8_arduino.py
