@@ -21,7 +21,7 @@ jobs:
         python-version: "3.10"
         cache: 'pip'    
     - name: Run tests
-      run: pytest -n 8 --tb=no bootstrap/test/test_x86-64-linux.py
+      run: pytest --tb=no bootstrap/test/test_x86-64-linux.py
         
   test_x86-16_Dos:
     name: Test on x86-16 DOS (Dosbox)
@@ -51,4 +51,4 @@ jobs:
         python-version: "3.10"
         cache: 'pip'
     - name: Run tests
-      run: pytest -n 8 --tb=no bootstrap/test/test_avr8_arduino.py
+      run: pytest --tb=no bootstrap/test/test_avr8_arduino.py
