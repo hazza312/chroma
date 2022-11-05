@@ -16,12 +16,15 @@ class DOSTest(CompleteTestSuite, TestCase):
     tmp = gettempdir() 
 
     def execute(self, binary) -> str:
+        bin = basepath(binary)
+        output = bin.split(".")[0].upper()
+        
         run(["dosbox", 
             "-c", f"mount c {self.tmp}",
             "-c", f"c:",
-            "-c", f"test{self.test_no}.com > OUT{self.test_no}.TXT",
+            "-c", f"{bin} > {output}",
             "-c", "exit"], timeout=2, env={"SDL_VIDEODRIVER": "dummy"})
 
-        with open(join(self.tmp, f"OUT{self.test_no}.TXT")) as f:
+        with open(join(self.tmp, output)) as f:
             return f.read() 
     
