@@ -12,7 +12,7 @@ class ChromaTest:
     test_no = 0
     
     def attempt(self, source, expect):
-        test_no += 1
+        self.test_no += 1
         src_path = join(self.tmp, f"test{test_no}.co")
         exec_path = join(self.tmp, f"test{test_no}.{self.ext}")
 
