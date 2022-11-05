@@ -23,7 +23,7 @@ class ArduinoTest(BaseTestSuite, SixteenBitLECompliance, TestCase):
                 "-machine", "uno",
                 "-bios", binary, 
                 "-nographic"],
-                timeout=0.2,
+                timeout=1,
                 capture_output=True)
         except TimeoutExpired as e:
             return e.stdout.decode()
