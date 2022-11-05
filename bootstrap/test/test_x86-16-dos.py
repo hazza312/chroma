@@ -1,7 +1,7 @@
 from unittest import TestCase
 from tempfile import gettempdir
 from os import chmod
-from os.path import join, basepath
+from os.path import join, basename
 from subprocess import run
 from time import sleep
 
@@ -16,7 +16,7 @@ class DOSTest(CompleteTestSuite, TestCase):
     tmp = gettempdir() 
 
     def execute(self, binary) -> str:
-        bin = basepath(binary)
+        bin = basename(binary)
         output = bin.split(".")[0].upper()
         
         run(["dosbox", 
