@@ -15,8 +15,7 @@ class UndefinedWordException(Exception):
         super(*args, **kwargs)
     
     def __str__(self):
-        return f"'{self.word}' is undefined "\
-                + f"({self.word_type}, {self.ref_type}, {self.branch_type})"
+        return f"'{self.word}' is undefined "
 
 
 class Compiler:

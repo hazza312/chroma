@@ -133,3 +133,34 @@ I shl W (n k -- n) Shift nos left k bits.
     M 8a 95             W dec r24
     M e1 f7             W brne l
     M cb 01             W movw r25:r24, r23:r22 Y ;
+    
+I a! W (addr --) Store tos addr in a register.
+    M de 91             W ld r29, -X
+    M ce 91             W ld r28, -X Y ;
+    
+I a W (-- n) Copy a register contents to tos.
+    G dup
+    M de 01             W movw r27:r26, r29:r28 Y ;
+
+I +a W (--) Increment a register one byte.
+    M 21 96             W r29:r28, 1 Y ;
+    
+I @a W (-- val) Fetch word stored at address in a register.
+    G dup
+    M 21 96             W adiw r29:r28, 1
+    M b8 81             W ld r27,Y
+    M aa 91             W ld r26, -Y Y ;
+    
+I !a W (-- val) Fetch word stored at address in a register.
+    G dup
+    M 21 96             W adiw r29:r28, 1
+    M b8 83             W st y, r27
+    M aa 93             W st -Y, r26 Y ;
+    
+I ! W (val addr --) Store value nos at address tos. Addr should be word aligned.
+    G popb
+    M fc 01             W movw r31:r30, r25:r24
+    M 61 93             W st Z+, r22
+    M 70 83             W st Z, r23 
+    G drop Y ;
+    
