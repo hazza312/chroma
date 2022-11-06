@@ -82,6 +82,22 @@ I jmp Y ip@ 2 + - 1 shr $0fff and $C000 or i16 ;
 I call Y ip@ 2 + - 1 shr $0fff and $D000 or i16 ;
 I ; M 08 95 Y ;
 
+I if W (b --) (-- op mask shift touchup) Branch to then if tos 0.
+    M bc 01             W movw r23:r22, r25:r24
+    G drop
+    M 67 2b             W or r22, r23 
+    Y $f001 $03f8 3 ip@ ;
+
+I !if W (b --) (-- op mask shift touchup) Branch to then if tos 0.
+    M bc 01             W movw r23:r22, r25:r24
+    G drop
+    M 67 2b             W or r22, r23 
+    Y $f401 $03f8 3 ip@ ;
+
+I then W (--) (op mask shift touchup --) Construct (conditional) branch to current location.
+    Y dup >r ip@ 2 - swap - 1 shr swap shl and or r> i16! ;
+
+
 I 1+ W (n -- n) Increment tos. 
     M 01 96             W adiw r24, 1 Y ;
     
