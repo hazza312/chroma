@@ -82,20 +82,40 @@ I jmp Y ip@ 2 + - 1 shr $0fff and $C000 or i16 ;
 I call Y ip@ 2 + - 1 shr $0fff and $D000 or i16 ;
 I ; M 08 95 Y ;
 
-I if W (b --) (-- op mask shift touchup) Branch to then if tos 0.
+I if W (b --) (-- op mask shift touchup) Branch to then if tos is 0.
     M bc 01             W movw r23:r22, r25:r24
     G drop
     M 67 2b             W or r22, r23 
-    Y $f001 $03f8 3 ip@ ;
+    Y $f001 $03f8 3 ip@ 
+    M 00 00             W placeholder Y ;
 
-I !if W (b --) (-- op mask shift touchup) Branch to then if tos 0.
+I !if W (b --) (-- op mask shift touchup) Branch to then if tos is not 0.
     M bc 01             W movw r23:r22, r25:r24
     G drop
     M 67 2b             W or r22, r23 
-    Y $f401 $03f8 3 ip@ ;
+    Y $f401 $03f8 3 ip@ 
+    M 00 00             W placeholder Y ;
 
 I then W (--) (op mask shift touchup --) Construct (conditional) branch to current location.
     Y dup >r ip@ 2 - swap - 1 shr swap shl and or r> i16! ;
+    
+I for W (n --) (-- addr) Begin a counted iteration loop.
+    M 4f 93             W push r20
+    M 5f 93             W push r21
+    M ac 01             W movw r21:r20, r25:r24
+    G drop
+    Y ip@ ;
+    
+I next W (--) (addr --) Terminate a counted iteration loop.
+    M 4a 95             W dec r20
+    Y ip@ 2 + - 1 shr 3 shl $03f8 and $f401 or i16
+    M 5f 91             W pop r21
+    M 4f 91             W pop r20 Y ;
+    
+I ;; W (--) (a b --) Leave a counted iteration loop.
+    M 5f 91             W pop r21
+    M 4f 91             W pop r20
+    G ; Y ;
 
 
 I 1+ W (n -- n) Increment tos. 
@@ -180,3 +200,13 @@ I ! W (val addr --) Store value nos at address tos. Addr should be word aligned.
     M 70 83             W st Z, r23 
     G drop Y ;
     
+I @ W (addr -- val) Fetch word stored at address tos.
+    M fc 01             W movw r31:r30, r25:r24
+    M 81 91             W ld r24, Z+
+    M 91 91             W ld r25, Z+ Y ;
+
+I c@ W (addr -- val) Fetch byte stored at address tos.
+    M fc 01             W movw r31:r30, r25:r24
+    M 81 91             W ld r24, Z+
+    M 99 27             W clr r25, r25 Y ;
+

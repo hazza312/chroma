@@ -26,4 +26,4 @@ class ArduinoTest(BaseTestSuite, SixteenBitLECompliance, TestCase):
                 timeout=1,
                 capture_output=True)
         except TimeoutExpired as e:
-            return e.stdout.decode()
+            return "" if e.stdout is None else e.stdout.decode()

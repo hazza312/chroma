@@ -226,7 +226,7 @@ class SubroutineCallOperations(ChromaTest):
         self.attempt("R f G R main G ;", "")
         
     def test_recursion(self):
-        factorial = "R f G dup !if drop 1 ; then dup 1- f * ; "
+        factorial = "R f G dup !if drop 0 ; then dup 1- f + ; "
         self.attempt(factorial + "R main G 3 f $30 + emit ;", "6")
         
 
