@@ -322,7 +322,7 @@ class SixteenBitLECompliance(ChromaTest):
         self.attempt('R main G $3130 8 shr $ff and emit ;', '1')
     
     def test_16_add_rollover(self):
-        self.attempt('R main G $ff 1 + dup $30 + emit 8 shr $30 + emit ;', '01')
+        self.attempt('R main G $ff 1 + dup $30 + $ff and emit 8 shr $30 + $ff and emit ;', '01')
     
     
     
