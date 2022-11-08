@@ -293,7 +293,7 @@ class ARegisterTests(ChromaTest):
     def test_increment_increment_word_retrieve(self):
         store = "buf a! $30 16 for dup !a ++a 1+ next "
         retrieve = "buf a! ++a @a "
-        self.attempt("R main P buf G " + store + " " + retrieve + " $ff and emit ;", "1")
+        self.attempt("R main P buf G " + store + " " + retrieve + " emit ;", "1")
        
 
 class StringTests(ChromaTest):
@@ -322,7 +322,7 @@ class SixteenBitLECompliance(ChromaTest):
         self.attempt('R main G $3130 8 shr $ff and emit ;', '1')
     
     def test_16_add_rollover(self):
-        self.attempt('R main G $ff 1 + dup $30 + emit 8 shr $30 + emit ;', '00')
+        self.attempt('R main G $ff 1 + dup $30 + emit 8 shr $30 + emit ;', '01')
     
     
     

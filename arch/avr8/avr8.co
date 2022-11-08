@@ -73,6 +73,34 @@ I r@ W (-- n) (n --) Push the popped value from return stack.
     M 8f 91             W pop r24
     M 8f 93             W push r24
     M 9f 93             W push r25 Y ;
+    
+I rot W (a b c -- b c a) Rotate stack one place.
+    M 7e 91             W ld r23, -X
+    M 6e 91             W ld r22, -X
+    M 3e 91             W ld r19, -X
+    M 2e 91             W ld r18, -X
+    
+    M 6d 93             W st X+, r22
+    M 7d 93             W st X+, r23
+    M 8d 93             W st X+, r24
+    M 9d 93             W st X+, r25
+    
+    M c9 01             W movw r25:r24, r19:r18 Y ;
+    
+I -rot W (a b c -- c a b) Rotate stack one place negatively.
+    M 7e 91             W ld r23, -X
+    M 6e 91             W ld r22, -X
+    M 3e 91             W ld r19, -X
+    M 2e 91             W ld r18, -X
+    
+    M 8d 93             W st X+, r24
+    M 9d 93             W st X+, r25
+    M 2d 93             W st X+, r18
+    M 3d 93             W st X+, r19
+    
+    M cb 01             W movw r25:r24, r23:r22 Y ;
+    
+
 
 I lit 
     G dup 
@@ -171,27 +199,30 @@ I shl W (n k -- n) Shift nos left k bits.
     M cb 01             W movw r25:r24, r23:r22 Y ;
     
 I a! W (addr --) Store tos addr in a register.
-    M de 91             W ld r29, -X
-    M ce 91             W ld r28, -X Y ;
+    M ec 01             W movw r29:r28, r25:r24
+    G drop Y ;
     
 I a W (-- n) Copy a register contents to tos.
     G dup
-    M de 01             W movw r27:r26, r29:r28 Y ;
+    M ce 01             W movw r25:r24, r29:r28 Y ;
+
+I ++a W (--) Incrememnt a register one word.
+    M 22 96             W adiw r29:r28, 2 Y ;
 
 I +a W (--) Increment a register one byte.
-    M 21 96             W r29:r28, 1 Y ;
+    M 21 96             W adiw r29:r28, 1 Y ;
+    
+I !a W (val -- ) Store word stored at address in a register.
+    M 89 93             W st y+, r24
+    M 98 83             W st y, r25
+    M 21 97             W sbiw r29:r28, 1 
+    G drop Y ;
     
 I @a W (-- val) Fetch word stored at address in a register.
     G dup
-    M 21 96             W adiw r29:r28, 1
-    M b8 81             W ld r27,Y
-    M aa 91             W ld r26, -Y Y ;
-    
-I !a W (-- val) Fetch word stored at address in a register.
-    G dup
-    M 21 96             W adiw r29:r28, 1
-    M b8 83             W st y, r27
-    M aa 93             W st -Y, r26 Y ;
+    M 89 91             W ld r24, Y+
+    M 98 81             W ld r25, y
+    M 21 97             W sbiw r29:r28, 1 Y ;
     
 I ! W (val addr --) Store value nos at address tos. Addr should be word aligned.
     G popb
