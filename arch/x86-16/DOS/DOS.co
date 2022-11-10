@@ -1,7 +1,7 @@
 W DOS Binary Format
 Y 2 sections little endian "com" ext I text Y 1 I data Y 2 ;
 Y $100 dup text base ! text ptr !
-Y $400 dup data base ! data ptr !
+Y $1000 dup data base ! data ptr !
 
 I i8 Y text w8 Y ; I i16 Y text w16 Y ;
 I ip Y text ptr I Y I ip@ Y ip @ I ip! Y text ptr ! ;

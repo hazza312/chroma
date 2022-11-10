@@ -298,7 +298,7 @@ class Compiler:
             for path in sys_includes(self._arch, self._platform):
                 self._compile(path)
 
-            #self._compile(join(self._here, "..", "lib", "core.co"))
+            self._compile(join(self._here, "..", "lib", "core.co"))
         self._compile(f) 
         self.tape_out(base)
         

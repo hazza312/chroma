@@ -1,0 +1,21 @@
+P _peek-char Y 8 allot P _has-char Y 8 allot 
+P wordbuf Y $100 allot
+
+R next-char W (--) Drop next-character in input stream if not eof.
+    G getc _has-char ! _peek-char ! ;
+
+R peek-char W (-- ch t/f) Peek next char in stream.
+    G _peek-char @ _has-char @ ;
+    
+R read-char W (-- ch t/f) W Read buffered char, indicating char availibility.
+    G peek-char next-char ;
+    
+R skip-ws W (--) Read ws characters.
+    R loop G peek-char !if ; then 
+    ws? if next-char loop ; then ;
+
+R read-word W (-- len) Read word into the a register and read length.
+    G skip-ws wordbuf a! 0 
+    R loop G peek-char !if drop ; then 
+    dup ws? if drop ; then 
+    !a +a 1+ next-char loop ;

@@ -1,4 +1,5 @@
 R space G $20 emit ;
+R cr W () G $a emit ; 
 
 R print-int W  (n --) Print positive/negative number in base10.
 G dup !if drop $30 emit ; then dup -if neg $2d emit then +div drop ;
@@ -16,6 +17,12 @@ G swap dup print-sign abs swap print-zf ;
 
 R print-s-hms W (s --) Print duration in seconds as hh:mm:ss
 G 3600 /mod 2 print-zf 58 emit 60 /mod 2 print-zf 58 emit 2 print-zf ;
+
+R hexdigit W (n -- n) G dup $a - -if $30 + ; then 55 + ;
+R nibble W (n --) G $f and hexdigit emit ; 
+R byte W (n --) G dup 4 shr nibble nibble ; R short W (n --) G dup 8 shr byte byte ; 
+R dword W (n --) G dup 16 shr short short ; R qword W (n --) G dup 32 shr dword dword ;
+
 
 R .size W (bytes --) Print nicely approx number of bytes. G
 dup 1024 - -if . "b" puts ; then 10 shr
