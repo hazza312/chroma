@@ -177,7 +177,7 @@ class ConditionalOperations(ChromaTest):
     """
     Testing basic conditionals:
     
-    if, !if, then
+    if, !if, -if, then
     """
 
     def test_if_should_drop(self):
@@ -197,6 +197,9 @@ class ConditionalOperations(ChromaTest):
     
     def test_nif_condition_skip(self):
         self.attempt("R main G $1 !if $30 emit ; then $31 emit ;", "1")
+        
+    def test_negative_if(self):
+        self.attempt("R main G 0 1- -if $30 emit ; then $31 emit ;", "0")
         
 
 class BranchingOperations(ChromaTest):
@@ -275,7 +278,7 @@ class ARegisterTests(ChromaTest):
     """
     Test operations involving the a register. These include:
     
-    a, a!, !a, @a, +a, ++a     
+    a, a!, !a, @a, +a, ++a, c!a, c@a
     """
     
     def test_simple_set_get(self):
@@ -294,7 +297,12 @@ class ARegisterTests(ChromaTest):
         store = "buf a! $30 16 for dup !a ++a 1+ next "
         retrieve = "buf a! ++a @a "
         self.attempt("R main P buf G " + store + " " + retrieve + " emit ;", "1")
+    
+    def test_byte_store(self):
+        self.attempt('R main P s Y word G s a! $30 c!a ;', '')
        
+    def test_byte_store_fetch(self):
+        self.attempt('R main P s Y word G s a! $30 c!a c@a emit ;', '0')
 
 class StringTests(ChromaTest):
     """
@@ -307,8 +315,19 @@ class StringTests(ChromaTest):
         
     def test_char_array_stored(self):
         self.attempt('R main G "hello" 1+ 5 for dup c@ emit 1+ next ;', 'hello')
-        
 
+
+class ImplementInternalCompilerWords(ChromaTest):
+    """
+    Ensure for the architecture words used by the compiler are implemented.
+    
+    word-size
+    """
+    
+    def test_word_size(self):
+        self.attempt('R main G word-size ;', '')
+    
+    
 class SixteenBitLECompliance(ChromaTest):
     """
     Architectures should provide at least 16-bit arithmetic.
