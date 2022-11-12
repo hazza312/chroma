@@ -1,6 +1,8 @@
 Y code magic!
 I ip@ Y code ptr @ I i32 Y code w32 I i8 Y code w8
 
+I word-size Y 8 ;
+
 I swap W (a b -- b a) Swap the top two elements on the stack.
 M 48 8b 1e 48 89 06 48 93 Y ;
 

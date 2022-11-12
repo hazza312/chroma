@@ -5,6 +5,8 @@ W loop=cx
 W dsp=si
 W ssp=sp
 
+I word-size W (-- n) W Word size in bytes for a given system. Y 2 ;
+
 I nip W (a b -- b) Remove second on stack.
 	M 46 46 		W inc si; inc si Y ;
 
@@ -153,7 +155,8 @@ I @ W (addr -- n) Fetch cell value at addr tos.
 
 I c@ W (addr -- n) Fetch byte at addr tos.
 	M 93 			W xchg ax, bx 
-	M 8a 07			W mov al, [bx] Y ;
+	M 8a 07			W mov al, [bx]
+    M 30 e4         W xor ah, ah Y ;
 	
 I c! W (n addr --) Store byte nos at address tos.
 	M 93 			W xchg ax, bx
@@ -173,9 +176,18 @@ I !a W (val --) Store via a register.
 	M 89 05 		W mov [di], ax 
 	G drop Y ;
 
+I c!a W (val --) Store byte via a register.
+	M 88 05 		W mov byte [di], al 
+	G drop Y ;
+
 I @a W (-- val) Fetch via a register.
 	G dup 
 	M 8b 05 		W mov ax, [di] Y ;
+
+I c@a W (-- val) Fetch via a register.
+	G dup 
+	M 8b 05 		W mov ax, [di] 
+    M 30 e4         W xor ah, ah Y ;
 	
 I ++a W (--) Increment a register by a cell.
 	M 47 47 		W inc di; inc di Y ;

@@ -22,6 +22,8 @@ I Xhi Y 27 ;
 I Tlo Y 24 ;
 I Thi Y 25 ;
 
+I word-size Y 2 ;
+
 I ldi W (val Rd[16..32] --) Y 
     16 - 4 shl $e000 or swap dup $00f0 and 4 shl swap $000f and or or i16 ;
 
@@ -223,6 +225,15 @@ I @a W (-- val) Fetch word stored at address in a register.
     M 89 91             W ld r24, Y+
     M 98 81             W ld r25, y
     M 21 97             W sbiw r29:r28, 1 Y ;
+    
+I c!a W (val --) Store byte via a register.
+    M 88 38             W st y, r24 
+    G drop Y ;
+    
+I c@a W (-- val) Fetch via a register.
+    G dup 
+    M 88 81             W ld r24, y
+    M 99 27             W clr r25 Y ;
     
 I ! W (val addr --) Store value nos at address tos. Addr should be word aligned.
     G popb

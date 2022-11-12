@@ -6,6 +6,8 @@ x25 = scratch register #2
 x24 = loop counter
 x23 = 'a' register
 
+I word-size Y 8 ;
+
 I p32 W (--) (-- addr) Fill a placeholder and push current code addr on compile stack (internal).
 Y code ptr @ 0 i32 ;
 
