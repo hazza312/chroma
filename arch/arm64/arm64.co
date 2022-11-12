@@ -179,6 +179,11 @@ I ! W (addr -- val) Fetch a value at tos address.
     M 7a 03 00 f9   W str   x26, [x27]
     G drop Y ;
     
+I c! W (n addr --) Store byte nos at address tos.
+    G nip
+    M 7a 03 00 39   W strb   w26, [x27]
+    G drop Y ;    
+    
 I a! W (addr --) Store an address in the a register.
     M f7 03 1b aa   W mov   x23, x27
     G drop Y ;

@@ -69,8 +69,8 @@ Y $98 b32 W cmdsize
 M 5f 5f 44 41 54 41 00 00 00 00 00 00 00 00 00 00 W "__DATA"
 Y $100004000 b64 W vmaddr
 Y $4000 b64 W vmsize
-Y $4000 b64 W fileoffset
-Y data size b64 W filesize, amount to map from file
+Y 0 b64 W fileoffset
+Y 0 b64 W filesize, amount to map from file
 M 3 0 0 0 W maxprot read | write
 M 3 0 0 0 W initprot read | write
 Y 1 b32 W nsects
@@ -129,7 +129,7 @@ Y $3000 code size - padding
 
 W $4000
 Y data write
-Y $4000 data size - padding
+Y $4000 padding
 
 W __LINKEDIT (0x8000 offset)
 Y $10 padding M 0 0 0 0 1 0 0 0 Y ;

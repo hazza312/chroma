@@ -370,4 +370,4 @@ if __name__ == '__main__':
     tokens.extend(Lexer(open(source)).all)
     
     Formatter(tokens).write(open(f"{source}.html", "w"))    
-    Compiler(arch, platform, debug=True).compile(source)
+    Compiler(arch, platform, debug=False).compile(source)
