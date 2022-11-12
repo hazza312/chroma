@@ -305,13 +305,26 @@ class Compiler:
     def make_listing(self, path):  
         with open(path, "w") as f:
             f.write("Code labels\n")
-
-            for name, addr in self._definitions.items():
+            for name, addr in sorted(self._definitions.items(), key=lambda xy: xy[1]):
                 f.write(f"{name:20}{hex(addr)}\n")
 
             f.write("Data labels\n")
-            for name, addr in self._variables.items():
+            for name, addr in sorted(self._variables.items(), key=lambda xy: xy[1]):
                 f.write(f"{name:20}{hex(addr)}\n")
+            
+            f.write("Macros\n")
+            for name, definition in sorted(self._macros.items(), key=lambda xy: xy[0]):
+                definition_text = ""
+                last_colour = None
+                for word in definition:
+                    if word.colour in (Colour.DOC, Colour.COMMENT):
+                        continue
+                    if word.colour != last_colour:
+                        definition_text += " " + word.colour.value
+                        last_colour = word.colour
+                    
+                    definition_text += " " + str(word.val)
+                f.write(f"{name:20}{definition_text}\n")
 
         
     def tape_out(self, output):
@@ -357,4 +370,4 @@ if __name__ == '__main__':
     tokens.extend(Lexer(open(source)).all)
     
     Formatter(tokens).write(open(f"{source}.html", "w"))    
-    Compiler(arch, platform, debug=False).compile(source)
+    Compiler(arch, platform, debug=True).compile(source)
