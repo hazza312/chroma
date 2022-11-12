@@ -1,7 +1,13 @@
-I true G 1 Y ;
-I false G 0 Y ;
-I , Y data w64 ;
+I true Y 1 lit Y ;
+I false Y 0 lit Y ;
 
-R abs W (n -- n) Determine absolute value of a number.
-G dup -if 0 swap - then ; 
 
+
+I allot W ( n -- ) 
+    Y data ptr @ + data ptr ! ;
+
+I word W (--) Allocate a word of memory 
+    Y word-size allot ;
+
+I words W (n --) Allocate n words of memory 
+    Y word-size * allot ;

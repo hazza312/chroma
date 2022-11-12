@@ -1,0 +1,7 @@
+P here Y word
+
+R alloc W (n -- ) Allocate n bytes on the heap.
+    G here @ dup rot + here ! ;
+
+I init-heap W (--) Initialise the heap area. 
+    Y data ptr @ lit G here ! Y ;

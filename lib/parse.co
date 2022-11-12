@@ -1,5 +1,7 @@
 P _peek-char Y 8 allot P _has-char Y 8 allot 
-P wordbuf Y $100 allot
+
+R ws? W (ch -- t/f) Return true if ch should be interpreted as a whitespace character. 
+    G 33 - -if 1 ; then 0 ;
 
 R next-char W (--) Drop next-character in input stream if not eof.
     G getc _has-char ! _peek-char ! ;
@@ -11,11 +13,14 @@ R read-char W (-- ch t/f) W Read buffered char, indicating char availibility.
     G peek-char next-char ;
     
 R skip-ws W (--) Read ws characters.
-    R loop G peek-char !if ; then 
-    ws? if next-char loop ; then ;
+    G peek-char !if drop ; then ws? if next-char skip-ws ; then ;
 
-R read-word W (-- len) Read word into the a register and read length.
-    G skip-ws wordbuf a! 0 
-    R loop G peek-char !if drop ; then 
-    dup ws? if drop ; then 
-    !a +a 1+ next-char loop ;
+R read-word W (addr --) Read word into buffer given by address.
+    G skip-ws dup dup a! +a 
+    R loop G peek-char !if done ; then 
+    dup ws? if done ; then 
+    c!a +a next-char loop ;
+    R done G drop a swap - 1- swap c! ;
+
+R init-parse W (--) Fill first peek buffer.
+    G next-char ;

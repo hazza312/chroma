@@ -1,0 +1,11 @@
+R str-len W (str -- len) Get length of string in characters.
+    G c@ ;
+
+R str-size W (str -- size) Get size of string in bytes.
+    G c@ 1+ ;
+
+R str-count W (str -- addr len) Get length and address of string char array.
+    G dup 1+ swap c@ ;
+
+R str-copy W (src dst --) Copy string from src to dst buffer.
+    G a! dup c@ 1+ for dup c@ c!a 1+ +a next drop ;
