@@ -299,10 +299,10 @@ class ARegisterTests(ChromaTest):
         self.attempt("R main P buf G " + store + " " + retrieve + " emit ;", "1")
     
     def test_byte_store(self):
-        self.attempt('R main P s Y word G s a! $30 c!a ;', '')
+        self.attempt('R main P s G s a! $30 c!a ;', '')
        
     def test_byte_store_fetch(self):
-        self.attempt('R main P s Y word G s a! $30 c!a c@a emit ;', '0')
+        self.attempt('R main P s G s a! $30 c!a c@a emit ;', '0')
 
 class StringTests(ChromaTest):
     """

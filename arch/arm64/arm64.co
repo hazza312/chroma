@@ -148,6 +148,12 @@ I if W (cond --) (-- op mask shift touchup) Prepare & push data for deferred if 
 I !if W (cond --) (-- op mask shift touchup) Execute following code if tos not 0, else branch.
     G scratch drop Y $b500001a $00ffffe0 5 p32 ; W CPZ C6-1251 
     
+I -if W (cond --) (-- op mask shift touchup) Execute following code if tos negative, else branch.
+    M fa 03 1b ab   W adds  x26, xzr, x27 ; (move tos to scratch setting flags) C6-1185
+    G drop
+    Y $54000005 $00ffffe0 5 p32 W ; C1-229, C6-1215
+    Y ;
+    
 I then W (--) (op mask shift touchup --) Construct (conditional) branch to current location.
     Y dup >r ip@ swap - 2 shr swap shl and or r> i32! ;
     
@@ -193,3 +199,10 @@ I !a W (val --) Store via a register.
 I @a W (-- val) Fetch via a register.
     G dup M fb 02 40 f9 W ldr   x27, [x23] Y ;
 
+I c!a W (val --) Store byte via a register.
+    M fb 02 00 39   W strb  w27, [x23]
+    G drop Y ;
+
+I c@a W (-- val) Fetch via a register.
+    G dup
+    M fb 02 40 39   W ldrb  w27, [x23] Y ;
