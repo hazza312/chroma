@@ -24,10 +24,3 @@ R byte W (n --) G dup 4 shr nibble nibble ; R short W (n --) G dup 8 shr byte by
 R dword W (n --) G dup 16 shr short short ; R qword W (n --) G dup 32 shr dword dword ;
 
 
-R .size W (bytes --) Print nicely approx number of bytes. G
-dup 1024 - -if . "b" puts ; then 10 shr
-dup 1024 - -if . "Kb" print ; then 10 shr
-dup 1024 - -if . "Mb" print ; then 10 shr
-dup 1024 - -if . "Gb" print ; then 10 shr
-dup 1024 - -if . "Tb" print ; then 10 shr
-dup 1024 - -if . "Pb" print ; then drop "big" print ; 

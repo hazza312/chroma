@@ -9,3 +9,9 @@ R str-count W (str -- addr len) Get length and address of string char array.
 
 R str-copy W (src dst --) Copy string from src to dst buffer.
     G a! dup c@ 1+ for dup c@ c!a 1+ +a next drop ;
+
+R str-hash W (str --) Hash a string.
+    The hash algorithm used for Java's hashCode on Strings.
+    Result probably only meaningful on architectures with >= 32-bits.
+    
+    G a! 0 c@a +a for 31 * c@a + +a next ; 

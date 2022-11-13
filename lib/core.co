@@ -1,7 +1,8 @@
 I true Y 1 lit Y ;
 I false Y 0 lit Y ;
 
-
+I abs W (n --) Return absolute value of a number.
+    G dup -if neg ; then ;
 
 I allot W ( n -- ) 
     Y data ptr @ + data ptr ! ;

@@ -19,14 +19,17 @@ R emit W (ch --) Output a single character to stdout.
     M 9b 87 40 f8   W ldr   x27, [x28], #8
     G ;
     
-R print W (arr n --) Output a character array to stdout.
-    M 20 00 80 d2  	W mov   x0, #1
+R write W (arr n handle --) Write n bytes to file handle.
+    M e0 03 1b aa  	W mov   x0, x27
+    M 82 87 40 f8  	W mov   x2, [x28], #8
     M 81 87 40 f8   W ldr   x1, [x28], #8
-    M e2 03 1b aa  	W mov   x2, x27
     M 90 00 80 d2  	W mov   x16, #4
     M 01 10 00 d4  	W svc   #0x80
     G drop ;
-    
+
+R print W (s --) Print a string.
+    G dup 1+ swap c@ 1 write ;
+
 R getc W (-- ch ch?) Get a single character from stdin.
     G dup
     M 9c 23 00 d1   W sub   x28, x28, #8
