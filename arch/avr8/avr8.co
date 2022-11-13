@@ -126,6 +126,13 @@ I !if W (b --) (-- op mask shift touchup) Branch to then if tos is not 0.
     Y $f401 $03f8 3 ip@ 
     M 00 00             W placeholder Y ;
 
+I -if W (b --) (-- op mask shift touchup) Branch to then if tos >= 0.
+    M bc 01             W movw r23:r22, r25:r24
+    G drop
+    M 77 23             W tst r23, r23 
+    Y $f402 $03f8 3 ip@ 
+    M 00 00             W placeholder Y ;
+
 I then W (--) (op mask shift touchup --) Construct (conditional) branch to current location.
     Y dup >r ip@ 2 - swap - 1 shr swap shl and or r> i16! ;
     
@@ -227,7 +234,7 @@ I @a W (-- val) Fetch word stored at address in a register.
     M 21 97             W sbiw r29:r28, 1 Y ;
     
 I c!a W (val --) Store byte via a register.
-    M 88 38             W st y, r24 
+    M 88 83             W st y, r24 
     G drop Y ;
     
 I c@a W (-- val) Fetch via a register.
