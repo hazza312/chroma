@@ -7,7 +7,8 @@ I swap W (a b -- b a) Swap the top two elements on the stack.
 M 48 8b 1e 48 89 06 48 93 Y ;
 
 I dup W (a -- a a) Duplicate the top element on stack.
-M 4c 29 fe 48 89 06 Y ;
+    M 4c 29 fe              W sub rsi, r15
+    M 48 89 06              W mov [rsi], rax Y ;
 
 I drop W (a --) Remove the top-most item from stack.
 M 48 ad Y ; 
@@ -134,8 +135,23 @@ I neg M 48 f7 d8 Y ;
 
 I a! M 49 96 48 ad Y ;
 I a M 4c 29 fe 48 89 06 4c 89 f0 Y ;
-I !a M 49 89 06 48 ad Y ;
-I @a M 4c 29 fe 48 89 06 49 8b 06 Y ;
+
+I !a 
+    M 49 89 06          W mov [r14], rax
+    M 48 ad             W lodsq Y ;
+
+I c!a 
+    M 41 88 06          W mov [r14], al
+    G drop Y ;
+    
+I @a        
+    G dup
+    M 49 8b 06          W mov rax, [r14] Y ;
+
+I c@a        
+    G dup
+    M 41 8a 06          W mov al, [r14] Y ;
+
 I +a M 49 ff c6 Y ;
 I ++a M 49 83 c6 08 Y ;
 
