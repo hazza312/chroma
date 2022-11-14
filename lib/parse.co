@@ -12,15 +12,18 @@ R peek-char W (-- ch t/f) Peek next char in stream.
 R read-char W (-- ch t/f) W Read buffered char, indicating char availibility.
     G peek-char next-char ;
     
-R skip-ws W (--) Read ws characters.
-    G peek-char !if drop ; then ws? if next-char skip-ws ; then ;
-
 R read-word W (addr --) Read word into buffer given by address.
     G skip-ws dup dup a! +a 
     R loop G peek-char !if done ; then 
     dup ws? if done ; then 
     c!a +a next-char loop ;
     R done G drop a swap - 1- swap c! ;
+
+R skip-while W (fn --) Consume characters while fn is true.
+    G a! R .loop G peek-char !if drop ; then a go if next-char .loop ; then ;
+    
+R skip-ws W (--) Consume whitespace characters.
+    Y ws? G skip-while ;
 
 R init-parse W (--) Fill first peek buffer.
     G next-char ;

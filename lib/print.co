@@ -23,4 +23,6 @@ R nibble W (n --) G $f and hexdigit emit ;
 R byte W (n --) G dup 4 shr nibble nibble ; R short W (n --) G dup 8 shr byte byte ; 
 R dword W (n --) G dup 16 shr short short ; R qword W (n --) G dup 32 shr dword dword ;
 
-
+R . W (n --) 
+    G word-size lit for dup $ff and swap 8 shr next drop
+    word-size lit for byte next ;
