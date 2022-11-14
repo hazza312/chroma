@@ -13,6 +13,7 @@ class BaseTestSuite(
     CountedLoopOperations,
     BasicMemoryOperations,
     ARegisterTests,
+    IndirectSubroutineCallOperation,
     ImplementInternalCompilerWords
 ):
     """Test suite implementing base words"""

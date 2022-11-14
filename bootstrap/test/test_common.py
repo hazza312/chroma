@@ -233,6 +233,17 @@ class SubroutineCallOperations(ChromaTest):
         self.attempt(factorial + "R main G 3 f $30 + emit ;", "6")
         
 
+class IndirectSubroutineCallOperation(ChromaTest):
+    """
+    Test indirect subroutine call.
+    
+    go
+    """
+    
+    def test_go(self):
+        self.attempt('R dst G $31 emit ; R main G $32 emit Y dst G go $30 emit ;', '210')
+        
+
 class CountedLoopOperations(ChromaTest):
     """
     Test counted interation loops.

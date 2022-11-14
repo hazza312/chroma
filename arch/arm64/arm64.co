@@ -46,7 +46,7 @@ I lit W (-- n) (n --) Push a literal to runtime stack
 
 I alit W (-- n) (n --) Push a (data) address literal to runtime stack.
     G dup
-    Y ip@ - dup $3 and 29 shl swap $3fffc and 3 shl or $1000001b or i32 ; W C6-1189
+    Y ip@ - dup $3 and 29 shl swap $1ffffc and 3 shl or $1000001b or i32 ; W C6-1189
 
 I str W (-- addr) (n --) 
     Y data ptr @ alit dup len data w8 data cpy ;
@@ -59,7 +59,6 @@ I 1- W (n -- n) Decrement tos.
     
 I neg W (n -- n) Negate tos.
     M fb 03 1b cb   W neg   x27, x27 Y ;
-    
     
 I + W (n n -- n) Add tos and nos.
     G nip M 7b 03 1a 8b     W add   x27, x27, x26 Y ;
@@ -129,6 +128,13 @@ I call W (--) (dst --) Compile a call to dst.
     M 7e 00 00 10   W adr   x30, #12
     M fe 0f 1f f8   W str   x30, [sp, #-16]!
     Y ip@ - 2 shr $3ffffff and $94000000 or i32 ; W C6-1229
+    
+I go W (dst --) An indirect call to address on TOS.
+    M fa 03 1b aa   W mov x26, x27 
+    M 9b 87 40 f8   W ldr x27, [x28], #8
+    M 7e 00 00 10   W adr x30, #12
+    M fe 0f 1f f8   W str x30, [sp, #-16]!
+    M 40 03 3f d6   W blr x26 Y ;
     
 I >r W (x --) (-- x) Transfer tos to return stack.
     M fb 0f 1f f8   W str   x27, [sp, #-16]!
