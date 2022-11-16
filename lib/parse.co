@@ -3,6 +3,9 @@ P _peek-char Y 8 allot P _has-char Y 8 allot
 R ws? W (ch -- t/f) Return true if ch should be interpreted as a whitespace character. 
     G 33 - -if 1 ; then 0 ;
 
+R lower? W (ch -- t/f) Return whether a character is lowercase or not.
+    G dup 97 - -if drop 0 ; then 123 - -if 1 ; then 0 ;
+
 R next-char W (--) Drop next-character in input stream if not eof.
     G getc _has-char ! _peek-char ! ;
 
@@ -18,6 +21,13 @@ R read-word W (addr --) Read word into buffer given by address.
     dup ws? if done ; then 
     c!a +a next-char loop ;
     R done G drop a swap - 1- swap c! ;
+    
+R read-while W (addr fn --) Read word into buffer given by address while fn condition is true.
+    G >r skip-ws dup dup a! +a 
+    R loop G peek-char !if ..done ; then 
+    dup r@ go !if ..done ; then 
+    c!a +a next-char loop ;
+    R ..done G r> drop drop a swap - 1- swap c! ;
 
 R skip-while W (fn --) Consume characters while fn is true.
     G a! R .loop G peek-char !if drop ; then a go if next-char .loop ; then ;
